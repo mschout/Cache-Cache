@@ -1,3 +1,18 @@
+- Shailen Bellare <Shailen.Bellare@lehman.com> assisted in the work 
+  required to migrated to Storable's "nfreeze" instead of "freeze" 
+
+- Simran <simran@cse.unsw.edu.au> submitted a patch to correctly initialize
+  the MemoryBackend hash
+
+- Rob Mueller <robm@fastmail.fm> and Jeremy Howard <jhoward@fastmail.fm> 
+  provided a patch to ensure consistent state if the filesystem fills up
+
+- Glady.Junsay <Glady.Junsay@target.com> noticed that get_keys was 
+  defined twice in NullCache
+
+- Sterling Swartwout <sterling_swartwout@standardandpoors.com> helped
+  track down an issue with the regex quoting in older versions of perl
+
 - Yves Orton <yves.orton@mciworldcom.de>, a CPAN tester, submitted a
   patch to _Make_Path to fix warnings on Win32
 
@@ -13,8 +28,8 @@
 - Richard Chen <chenri@snet.net> informed me of a better way to call
   static methods without knowing the type of the class until runtime
 
-- Christophe Marcant <christophe@marcant.org> offered a patch to allow
-  spaces to be used in the filenames
+- Christophe Marcant <bl3rw5pv001@sneakemail.com> offered a patch to
+  allow spaces to be used in the filenames
 
 - Eric Cholet <cholet@logilune.com> offered a patch to fix the missing
   import in Cache::CacheUtils and is helping debug using a Backend on

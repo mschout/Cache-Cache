@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: NullCache.pm,v 1.6 2002/04/07 17:04:46 dclinton Exp $
+# $Id: NullCache.pm,v 1.7 2002/07/18 06:15:18 dclinton Exp $
 # Copyright (C) 2001 Jay Sachs, 2002 DeWitt Clinton All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -97,7 +97,7 @@ sub get_keys
 }
 
 
-sub get_keys
+sub get_identifiers
 {
   warn( "get_identifiers has been marked deprepricated.  use get_keys" );
 

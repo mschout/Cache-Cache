@@ -1,6 +1,6 @@
 ######################################################################
-# $Id: CacheUtils.pm,v 1.37 2002/04/07 17:04:46 dclinton Exp $
-# Copyright (C) 2001, 2002 DeWitt Clinton  All Rights Reserved
+# $Id: CacheUtils.pm,v 1.39 2003/04/15 14:46:19 dclinton Exp $
+# Copyright (C) 2001-2003 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
 # IS" basis, WITHOUT WARRANTY OF ANY KIND, either expressed or
@@ -16,7 +16,7 @@ use Cache::Cache;
 use Error;
 use Exporter;
 use File::Spec;
-use Storable qw( freeze thaw dclone );
+use Storable qw( nfreeze thaw dclone );
 
 @ISA = qw( Exporter );
 
@@ -77,7 +77,7 @@ sub Freeze_Data
 {
   my ( $p_object  ) = @_;
 
-  return defined $p_object ? freeze( $p_object ) : undef;
+  return defined $p_object ? nfreeze( $p_object ) : undef;
 }
 
 
@@ -144,7 +144,7 @@ Original author: DeWitt Clinton <dewitt@unto.net>
 
 Last author:     $Author: dclinton $
 
-Copyright (C) 2001, 2002 DeWitt Clinton
+Copyright (C) 2001-2003 DeWitt Clinton
 
 =cut
 

@@ -1,6 +1,6 @@
 #####################################################################
-# $Id: Cache.pm,v 1.37 2002/04/14 05:31:17 dclinton Exp $
-# Copyright (C) 2001, 2002 DeWitt Clinton  All Rights Reserved
+# $Id: Cache.pm,v 1.40 2003/04/15 14:46:15 dclinton Exp $
+# Copyright (C) 2001-2003 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
 # IS" basis, WITHOUT WARRANTY OF ANY KIND, either expressed or
@@ -20,7 +20,7 @@ use Exporter;
 
 @EXPORT_OK = qw( $VERSION $EXPIRES_NOW $EXPIRES_NEVER );
 
-$VERSION = "1.01";
+$VERSION = "1.02";
 $EXPIRES_NOW = 'now';
 $EXPIRES_NEVER = 'never';
 
@@ -201,10 +201,10 @@ indicates the time in seconds until this data should be erased, or the
 constant $EXPIRES_NOW, or the constant $EXPIRES_NEVER.  Defaults to
 $EXPIRES_NEVER.  This variable can also be in the extended format of
 "[number] [unit]", e.g., "10 minutes".  The valid units are s, second,
-seconds, sec, m, minute, minutes, min, h, hour, hours, w, week, weeks,
-M, month, months, y, year, and years.  Additionally, $EXPIRES_NOW can
-be represented as "now" and $EXPIRES_NEVER can be represented as
-"never".
+seconds, sec, m, minute, minutes, min, h, hour, hours, d, day, days, w,
+week, weeks, M, month, months, y, year, and years.  Additionally,
+$EXPIRES_NOW can be represented as "now" and $EXPIRES_NEVER can be
+represented as "never".
 
 =item B<set_object( $key, $object )>
 
@@ -310,6 +310,6 @@ Original author: DeWitt Clinton <dewitt@unto.net>
 
 Last author:     $Author: dclinton $
 
-Copyright (C) 2001, 2002 DeWitt Clinton
+Copyright (C) 2001-2003 DeWitt Clinton
 
 =cut
