@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: BaseCache.pm,v 1.8 2001/09/05 14:39:27 dclinton Exp $
+# $Id: BaseCache.pm,v 1.22 2001/12/09 17:00:35 dclinton Exp $
 # Copyright (C) 2001 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -14,13 +14,10 @@ package Cache::BaseCache;
 
 use strict;
 use vars qw( @ISA );
-use Cache::Cache qw( $SUCCESS $FAILURE $EXPIRES_NEVER $TRUE $FALSE);
-use Cache::CacheUtils qw( Build_Object
-                          Freeze_Object
-                          Object_Has_Expired
-                          Thaw_Object
-                        );
-use Carp;
+use Cache::Cache qw( $EXPIRES_NEVER $EXPIRES_NOW );
+use Cache::CacheUtils qw( Assert_Defined Clone_Data );
+use Cache::Object;
+use Error;
 
 
 @ISA = qw( Cache::Cache );
@@ -28,8 +25,8 @@ use Carp;
 
 my $DEFAULT_EXPIRES_IN = $EXPIRES_NEVER;
 my $DEFAULT_NAMESPACE = "Default";
-my $DEFAULT_AUTO_PURGE_ON_SET = $FALSE;
-my $DEFAULT_AUTO_PURGE_ON_GET = $FALSE;
+my $DEFAULT_AUTO_PURGE_ON_SET = 0;
+my $DEFAULT_AUTO_PURGE_ON_GET = 0;
 
 
 # namespace that stores the keys used for the auto purge functionality
@@ -37,38 +34,289 @@ my $DEFAULT_AUTO_PURGE_ON_GET = $FALSE;
 my $AUTO_PURGE_NAMESPACE = "__AUTO_PURGE__";
 
 
+# map of expiration formats to their respective time in seconds
 
-##
-# Constructor
-##
+my %_Expiration_Units = ( map(($_,             1), qw(s second seconds sec)),
+                          map(($_,            60), qw(m minute minutes min)),
+                          map(($_,         60*60), qw(h hour hours)),
+                          map(($_,      60*60*24), qw(d day days)),
+                          map(($_,    60*60*24*7), qw(w week weeks)),
+                          map(($_,   60*60*24*30), qw(M month months)),
+                          map(($_,  60*60*24*365), qw(y year years)) );
 
 
-sub new
+
+# Takes the time the object was created, the default_expires_in and
+# optionally the explicitly set expires_in and returns the time the
+# object will expire. Calls _canonicalize_expiration to convert
+# strings like "5m" into second values.
+
+sub Build_Expires_At
 {
-  my ( $self ) = _new( @_ );
+  my ( $p_created_at, $p_default_expires_in, $p_explicit_expires_in ) = @_;
 
-  $self->_complete_initialization( ) or
-    croak( "Couldn't complete initialization" );
+  my $expires_in = defined $p_explicit_expires_in ?
+    $p_explicit_expires_in : $p_default_expires_in;
 
-  return $self;
+  return Sum_Expiration_Time( $p_created_at, $expires_in );
 }
 
 
-##
-# Private instance methods
-##
+# Return a Cache::Object object
+
+sub Build_Object
+{
+  my ( $p_key, $p_data, $p_default_expires_in, $p_expires_in ) = @_;
+
+  Assert_Defined( $p_key );
+  Assert_Defined( $p_default_expires_in );
+
+  my $now = time( );
+
+  my $object = new Cache::Object( );
+
+  $object->set_key( $p_key );
+  $object->set_data( $p_data );
+  $object->set_created_at( $now );
+  $object->set_accessed_at( $now );
+  $object->set_expires_at( Build_Expires_At( $now,
+                                             $p_default_expires_in,
+                                             $p_expires_in ) );
+  return $object;
+}
+
+
+# Compare the expires_at to the current time to determine whether or
+# not an object has expired (the time parameter is optional)
+
+sub Object_Has_Expired
+{
+  my ( $p_object, $p_time ) = @_;
+
+  if ( not defined $p_object )
+  {
+    return 1;
+  }
+
+  $p_time = $p_time || time( );
+
+  if ( $p_object->get_expires_at( ) eq $EXPIRES_NOW )
+  {
+    return 1;
+  }
+  elsif ( $p_object->get_expires_at( ) eq $EXPIRES_NEVER )
+  {
+    return 0;
+  }
+  elsif ( $p_time >= $p_object->get_expires_at( ) )
+  {
+    return 1;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+
+# Returns the sum of the  base created_at time (in seconds since the epoch)
+# and the canonical form of the expires_at string
+
+
+sub Sum_Expiration_Time
+{
+  my ( $p_created_at, $p_expires_in ) = @_;
+
+  Assert_Defined( $p_created_at );
+  Assert_Defined( $p_expires_in );
+
+  if ( $p_expires_in eq $EXPIRES_NEVER )
+  {
+    return $EXPIRES_NEVER;
+  }
+  else
+  {
+    return $p_created_at + Canonicalize_Expiration_Time( $p_expires_in );
+  }
+}
+
+
+# turn a string in the form "[number] [unit]" into an explicit number
+# of seconds from the present.  E.g, "10 minutes" returns "600"
+
+sub Canonicalize_Expiration_Time
+{
+  my ( $p_expires_in ) = @_;
+
+  Assert_Defined( $p_expires_in );
+
+  my $secs;
+
+  if ( uc( $p_expires_in ) eq uc( $EXPIRES_NOW ) )
+  {
+    $secs = 0;
+  }
+  elsif ( uc( $p_expires_in ) eq uc( $EXPIRES_NEVER ) )
+  {
+    throw Error::Simple( "Internal error.  expires_in eq $EXPIRES_NEVER" );
+  }
+  elsif ( $p_expires_in =~ /^\s*([+-]?(?:\d+|\d*\.\d*))\s*$/ )
+  {
+    $secs = $p_expires_in;
+  }
+  elsif ( $p_expires_in =~ /^\s*([+-]?(?:\d+|\d*\.\d*))\s*(\w*)\s*$/
+          and exists( $_Expiration_Units{ $2 } ))
+  {
+    $secs = ( $_Expiration_Units{ $2 } ) * $1;
+  }
+  else
+  {
+    throw Error::Simple( "invalid expiration time '$p_expires_in'" );
+  }
+
+  return $secs;
+}
+
+
+
+sub clear
+{
+  my ( $self ) = @_;
+
+  $self->_get_backend( )->delete_namespace( $self->get_namespace( ) );
+}
+
+
+sub get
+{
+  my ( $self, $p_key ) = @_;
+
+  Assert_Defined( $p_key );
+
+  $self->_conditionally_auto_purge_on_get( );
+
+  my $object = $self->get_object( $p_key ) or
+    return undef;
+
+  if ( Object_Has_Expired( $object ) )
+  {
+    $self->remove( $p_key );
+    return undef;
+  }
+
+  return $object->get_data( );
+}
+
+
+sub get_keys
+{
+  my ( $self ) = @_;
+
+  return $self->_get_backend( )->get_keys( $self->get_namespace( ) );
+}
+
+
+sub get_identifiers
+{
+  my ( $self ) = @_;
+
+  warn( "get_identifiers has been marked deprepricated.  use get_keys" );
+
+  return $self->get_keys( );
+}
+
+
+sub get_object
+{
+  my ( $self, $p_key ) = @_;
+
+  Assert_Defined( $p_key );
+
+  my $object =
+    $self->_get_backend( )->restore( $self->get_namespace( ), $p_key ) or
+      return undef;
+
+  $object->set_size( $self->_get_backend( )->
+                     get_size( $self->get_namespace( ), $p_key ) );
+
+  $object->set_key( $p_key );
+
+  return $object;
+}
+
+
+sub purge
+{
+  my ( $self ) = @_;
+
+  foreach my $key ( $self->get_keys( ) )
+  {
+    $self->get( $key );
+  }
+}
+
+
+sub remove
+{
+  my ( $self, $p_key ) = @_;
+
+  Assert_Defined( $p_key );
+
+  $self->_get_backend( )->delete_key( $self->get_namespace( ), $p_key );
+}
+
+
+sub set
+{
+  my ( $self, $p_key, $p_data, $p_expires_in ) = @_;
+
+  Assert_Defined( $p_key );
+
+  $self->_conditionally_auto_purge_on_set( );
+
+  $self->set_object( $p_key,
+                     Build_Object( $p_key,
+                                   $p_data,
+                                   $self->get_default_expires_in( ),
+                                   $p_expires_in ) );
+}
+
+
+sub set_object
+{
+  my ( $self, $p_key, $p_object ) = @_;
+
+  my $object = Clone_Data( $p_object );
+
+  $object->set_size( undef );
+  $object->set_key( undef );
+
+  $self->_get_backend( )->store( $self->get_namespace( ), $p_key, $object );
+}
+
+
+sub size
+{
+  my ( $self ) = @_;
+
+  my $size = 0;
+
+  foreach my $key ( $self->get_keys( ) )
+  {
+    $size += $self->_get_backend( )->get_size( $self->get_namespace( ), $key );
+  }
+
+  return $size;
+}
 
 
 sub _new
 {
-  my ( $proto, $options_hash_ref ) = @_;
+  my ( $proto, $p_options_hash_ref ) = @_;
   my $class = ref( $proto ) || $proto;
   my $self  = {};
   bless( $self, $class );
-
-  $self->_initialize_base_cache( $options_hash_ref ) or
-    croak( "Couldn't initialize Cache::BaseCache" );
-
+  $self->_initialize_base_cache( $p_options_hash_ref );
   return $self;
 }
 
@@ -76,44 +324,29 @@ sub _new
 sub _complete_initialization
 {
   my ( $self ) = @_;
-
-  $self->_initialize_auto_purge_interval( ) or
-    croak( "Couldn't initialize auto purge interval" );
-
-  return $SUCCESS;
+  $self->_initialize_auto_purge_interval( );
 }
 
 
 sub _initialize_base_cache
 {
-  my ( $self, $options_hash_ref ) = @_;
+  my ( $self, $p_options_hash_ref ) = @_;
 
-  $self->_initialize_options_hash_ref( $options_hash_ref ) or
-    croak( "Couldn't initialize options hash ref" );
-
-  $self->_initialize_namespace( ) or
-    croak( "Couldn't initialize namespace" );
-
-  $self->_initialize_default_expires_in( ) or
-    croak( "Couldn't initialize default expires in" );
-
-  $self->_initialize_auto_purge_on_set( ) or
-    croak( "Couldn't initialize auto purge on set" );
-
-  $self->_initialize_auto_purge_on_get( ) or
-    croak( "Couldn't initialize auto purge on get" );
-
-  return $SUCCESS;
+  $self->_initialize_options_hash_ref( $p_options_hash_ref );
+  $self->_initialize_namespace( );
+  $self->_initialize_default_expires_in( );
+  $self->_initialize_auto_purge_on_set( );
+  $self->_initialize_auto_purge_on_get( );
 }
 
 
 sub _initialize_options_hash_ref
 {
-  my ( $self, $options_hash_ref ) = @_;
+  my ( $self, $p_options_hash_ref ) = @_;
 
-  $self->_set_options_hash_ref( $options_hash_ref );
-
-  return $SUCCESS;
+  $self->_set_options_hash_ref( defined $p_options_hash_ref ?
+                                $p_options_hash_ref :
+                                { } );
 }
 
 
@@ -124,8 +357,6 @@ sub _initialize_namespace
   my $namespace = $self->_read_option( 'namespace', $DEFAULT_NAMESPACE );
 
   $self->set_namespace( $namespace );
-
-  return $SUCCESS;
 }
 
 
@@ -137,8 +368,6 @@ sub _initialize_default_expires_in
     $self->_read_option( 'default_expires_in', $DEFAULT_EXPIRES_IN );
 
   $self->_set_default_expires_in( $default_expires_in );
-
-  return $SUCCESS;
 }
 
 
@@ -151,11 +380,8 @@ sub _initialize_auto_purge_interval
   if ( defined $auto_purge_interval )
   {
     $self->set_auto_purge_interval( $auto_purge_interval );
-
     $self->_auto_purge( );
   }
-
-  return $SUCCESS;
 }
 
 
@@ -167,8 +393,6 @@ sub _initialize_auto_purge_on_set
     $self->_read_option( 'auto_purge_on_set', $DEFAULT_AUTO_PURGE_ON_SET );
 
   $self->set_auto_purge_on_set( $auto_purge_on_set );
-
-  return $SUCCESS;
 }
 
 
@@ -180,69 +404,28 @@ sub _initialize_auto_purge_on_get
     $self->_read_option( 'auto_purge_on_get', $DEFAULT_AUTO_PURGE_ON_GET );
 
   $self->set_auto_purge_on_get( $auto_purge_on_get );
-
-  return $SUCCESS;
 }
 
 
 
 # _read_option looks for an option named 'option_name' in the
 # option_hash associated with this instance.  If it is not found, then
-# 'default_value' will be returned instance
-
+# 'default_value' will be returned instead
 
 sub _read_option
 {
-  my ( $self, $option_name, $default_value ) = @_;
+  my ( $self, $p_option_name, $p_default_value ) = @_;
 
   my $options_hash_ref = $self->_get_options_hash_ref( );
 
-  if ( defined $options_hash_ref->{$option_name} )
+  if ( defined $options_hash_ref->{ $p_option_name } )
   {
-    return $options_hash_ref->{$option_name};
+    return $options_hash_ref->{ $p_option_name };
   }
   else
   {
-    return $default_value;
+    return $p_default_value;
   }
-}
-
-
-sub _freeze
-{
-  my ( $self, $object ) = @_;
-
-  defined $object or
-    croak( "object required" );
-
-  $object->set_size( undef );
-
-  my $object_dump;
-
-  Freeze_Object( \$object, \$object_dump ) or
-    croak( "Couldn't freeze object" );
-
-  return $object_dump;
-}
-
-
-sub _thaw
-{
-  my ( $self, $object_dump ) = @_;
-
-  defined $object_dump or
-    croak( "object_dump required" );
-
-  my $size = length $object_dump;
-
-  my $object;
-
-  Thaw_Object( \$object_dump, \$object ) or
-    croak( "Couldn't thaw object" );
-
-  $object->set_size( $size );
-
-  return $object;
 }
 
 
@@ -256,35 +439,40 @@ sub _reset_auto_purge_interval
 {
   my ( $self ) = @_;
 
-  my $auto_purge_interval = $self->get_auto_purge_interval( );
+  return if not $self->_should_auto_purge( );
 
-  return $SUCCESS if not defined $auto_purge_interval;
+  my $real_namespace = $self->get_namespace( );
 
-  return $SUCCESS if $auto_purge_interval eq $EXPIRES_NEVER;
+  $self->set_namespace( $AUTO_PURGE_NAMESPACE );
 
-  my $namespace = $self->get_namespace( ) or
-    croak( "Couldn't get namespace" );
-
-  $self->set_namespace( $AUTO_PURGE_NAMESPACE ) or
-    croak( "Couldn't set auto purge namespace to $AUTO_PURGE_NAMESPACE" );
-
-  if ( not defined $self->get( $namespace ) )
+  if ( not defined $self->get( $real_namespace ) )
   {
-    my $object =
-      Build_Object( $namespace, 1, $auto_purge_interval, undef ) or
-        croak( "Couldn't build cache object" );
-
-    $self->set_object( $namespace, $object ) or
-      croak( "Couldn't set_object( $namespace, $object )" );
+    $self->_insert_auto_purge_object( $real_namespace );
   }
 
-  $self->set_namespace( $namespace ) or
-    croak( "Couldn't set namespace to $namespace" );
-
-  return $SUCCESS;
+  $self->set_namespace( $real_namespace );
 }
 
 
+sub _should_auto_purge
+{
+  my ( $self ) = @_;
+
+  return ( defined $self->get_auto_purge_interval( ) &&
+           $self->get_auto_purge_interval( ) ne $EXPIRES_NEVER );
+}
+
+sub _insert_auto_purge_object
+{
+  my ( $self, $p_real_namespace ) = @_;
+
+  my $object = Build_Object( $p_real_namespace,
+                             1,
+                             $self->get_auto_purge_interval( ),
+                             undef );
+
+  $self->set_object( $p_real_namespace, $object );
+}
 
 
 
@@ -298,34 +486,32 @@ sub _auto_purge
 {
   my ( $self ) = @_;
 
-  my $auto_purge_interval = $self->get_auto_purge_interval( );
-
-  return $SUCCESS if not defined $auto_purge_interval;
-
-  return $SUCCESS if $auto_purge_interval eq $EXPIRES_NEVER;
-
-  my $namespace = $self->get_namespace( ) or
-    croak( "Couldn't get namespace" );
-
-  $self->set_namespace( $AUTO_PURGE_NAMESPACE ) or
-    croak( "Couldn't set auto purge namespace to $AUTO_PURGE_NAMESPACE" );
-
-  my $auto_purge_object = $self->get_object( $namespace );
-
-  $self->set_namespace( $namespace ) or
-    croak( "Couldn't set namespace to $namespace" );
-
-  if ( ( not defined $auto_purge_object ) or
-       ( Object_Has_Expired ( $auto_purge_object ) ) )
+  if ( $self->_needs_auto_purge( ) )
   {
-    $self->purge( ) or
-      croak( "Couldn't purge" );
-
-    $self->_reset_auto_purge_interval( ) or
-      croak( "Couldn't reset auto purge interval" );
+    $self->purge( );
+    $self->_reset_auto_purge_interval( );
   }
+}
 
-  return $SUCCESS;
+
+sub _get_auto_purge_object
+{
+  my ( $self ) = @_;
+
+  my $real_namespace = $self->get_namespace( );
+  $self->set_namespace( $AUTO_PURGE_NAMESPACE );
+  my $auto_purge_object = $self->get_object( $real_namespace );
+  $self->set_namespace( $real_namespace );
+  return $auto_purge_object;
+}
+
+
+sub _needs_auto_purge
+{
+  my ( $self ) = @_;
+
+  return ( $self->_should_auto_purge( ) &&
+           Object_Has_Expired( $self->_get_auto_purge_object( ) ) );
 }
 
 
@@ -337,11 +523,8 @@ sub _conditionally_auto_purge_on_set
 
   if ( $self->get_auto_purge_on_set( ) )
   {
-    $self->_auto_purge( ) or
-      croak( "Couldn't auto purge" );
+    $self->_auto_purge( );
   }
-
-  return $SUCCESS;
 }
 
 
@@ -353,17 +536,9 @@ sub _conditionally_auto_purge_on_get
 
   if ( $self->get_auto_purge_on_get( ) )
   {
-    $self->_auto_purge( ) or
-      croak( "Couldn't auto purge" );
+    $self->_auto_purge( );
   }
-
-  return $SUCCESS;
 }
-
-
-##
-# Instance properties
-##
 
 
 sub _get_options_hash_ref
@@ -428,8 +603,7 @@ sub set_auto_purge_interval
 
   $self->{_Auto_Purge_Interval} = $auto_purge_interval;
 
-  $self->_reset_auto_purge_interval( ) or
-    croak( "Couldn't reset auto purge interval" );
+  $self->_reset_auto_purge_interval( );
 }
 
 
@@ -465,6 +639,23 @@ sub set_auto_purge_on_get
 }
 
 
+sub _get_backend
+{
+  my ( $self ) = @_;
+
+  return $self->{ _Backend };
+}
+
+
+sub _set_backend
+{
+  my ( $self, $p_backend ) = @_;
+
+  $self->{ _Backend } = $p_backend;
+}
+
+
+
 1;
 
 
@@ -486,51 +677,73 @@ be used as superclass for cache implementations.
 =head1 SYNOPSIS
 
 Cache::BaseCache is to be used as a superclass for cache
-implementations.
+implementations.  The most effective way to use BaseCache is to use
+the protected _set_backend method, which will be used to retrieve the
+persistance mechanism.  The subclass can then inherit the BaseCache's
+implentation of get, set, etc.  However, due to the difficulty
+inheriting static methods in Perl, the subclass will likely need to
+explicitly implement Clear, Purge, and Size.  Also, a factory pattern
+should be used to invoke the _complete_initialization routine after
+the object is constructed.
+
 
   package Cache::MyCache;
 
   use vars qw( @ISA );
   use Cache::BaseCache;
+  use Cache::MyBackend;
 
   @ISA = qw( Cache::BaseCache );
 
   sub new
   {
-    my ( $proto, $options_hash_ref ) = @_;
-    my $class = ref( $proto ) || $proto;
+    my ( $self ) = _new( @_ );
 
-    my $self  =  $class->SUPER::new( $options_hash_ref ) or
-      croak( "Couldn't run super constructor" );
+    $self->_complete_initialization( );
 
     return $self;
   }
 
-  sub get
+  sub _new
   {
-    my ( $self, $identifier ) = @_;
-
-    #...
+    my ( $proto, $p_options_hash_ref ) = @_;
+    my $class = ref( $proto ) || $proto;
+    my $self = $class->SUPER::_new( $p_options_hash_ref );
+    $self->_set_backend( new Cache::MyBackend( ) );
+    return $self;
   }
 
 
-=head1 PROPERTIES
+  sub Clear
+  {
+    foreach my $namespace ( _Namespaces( ) )
+    {
+      _Get_Backend( )->delete_namespace( $namespace );
+    }
+  }
 
-=over 4
 
-=item B<get_namespace>
+  sub Purge
+  {
+    foreach my $namespace ( _Namespaces( ) )
+    {
+      _Get_Cache( $namespace )->purge( );
+    }
+  }
 
-See Cache::Cache
 
-=item B<get_default_expires_in>
+  sub Size
+  {
+    my $size = 0;
 
-See Cache::Cache
+    foreach my $namespace ( _Namespaces( ) )
+    {
+      $size += _Get_Cache( $namespace )->size( );
+    }
 
-=item B<get_auto_purge>
+    return $size;
+  }
 
-See Cache::Cache
-
-=back
 
 =head1 SEE ALSO
 

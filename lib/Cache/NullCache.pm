@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: NullCache.pm,v 1.1 2001/09/05 14:39:27 dclinton Exp $
+# $Id: NullCache.pm,v 1.5 2001/12/09 22:43:03 dclinton Exp $
 # Copyright (C) 2001 Jay Sachs  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -13,26 +13,20 @@ package Cache::NullCache;
 
 use strict;
 use vars qw( @ISA );
-use Cache::Cache qw( $EXPIRES_NOW $SUCCESS $FAILURE $FALSE );
+use Cache::Cache qw( $EXPIRES_NOW  );
 
 @ISA = qw ( Cache::BaseCache );
-
-use base qw(Cache::Cache);
-
-##
-# Public class methods
-##
 
 
 sub Clear
 {
-  return $SUCCESS;
 }
+
 
 sub Purge
 {
-  return $SUCCESS;
 }
+
 
 sub Size
 {
@@ -40,59 +34,50 @@ sub Size
 }
 
 
-##
-# Constructor
-##
-
-
 sub new
 {
-  my ($proto) = @_;
+  my ( $proto ) = @_;
 
-  return bless( {}, ref($proto) || $proto );
+  return bless( {}, ref( $proto ) || $proto );
 }
-
-
-##
-# Public instance methods
-##
 
 
 sub clear
 {
-  return $SUCCESS;
 }
+
 
 sub get
 {
   return undef;
 }
 
+
 sub get_object
 {
   return undef;
 }
 
+
 sub purge
 {
-  return $SUCCESS;
 }
+
 
 sub remove
 {
-  return $FAILURE;
 }
+
 
 sub set
 {
-  return $SUCCESS;
 }
 
 
 sub set_object
 {
-  return $SUCCESS;
 }
+
 
 sub size
 {
@@ -100,57 +85,105 @@ sub size
 }
 
 
-##
-# Properties
-##
-
-
 sub get_default_expires_in
 {
   return $EXPIRES_NOW;
 }
 
-sub get_namespace
+
+sub get_keys
 {
-  return shift->{_Namespace};
+  return ( );
 }
 
-sub set_namespace
+
+sub get_keys
 {
-  my ($self, $namespace) = @_;
-  $self->{_Namespace} = $namespace;
+  warn( "get_identifiers has been marked deprepricated.  use get_keys" );
+
+  return ( );
 }
 
-sub get_identifiers
-{
-  return ();
-}
 
 sub get_auto_purge_interval
 {
   return 0;
 }
 
+
 sub set_auto_purge_interval
 {
 }
 
+
 sub get_auto_purge_on_set
 {
-  return $FALSE;
+  return 0;
 }
+
 
 sub set_auto_purge_on_set
 {
 }
 
+
 sub get_auto_purge_on_get
 {
-  return $FALSE;
+  return 0;
 }
+
 
 sub set_auto_purge_on_get
 {
 }
 
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Cache::NullCache -- implements the Cache interface.
+
+=head1 DESCRIPTION
+
+The NullCache class implements the Cache::Cache interface, but does
+not actually persist data.  This is useful when developing and
+debugging a system and you wish to easily turn off caching.  As a
+result, all calls to get and get_object will return undef.
+
+=head1 SYNOPSIS
+
+  use Cache::NullCache;
+
+  my $cache = new Cache::NullCache( );
+
+  See Cache::Cache for the usage synopsis.
+
+=head1 METHODS
+
+See Cache::Cache for the API documentation.
+
+=head1 OPTIONS
+
+See Cache::Cache for standard options.
+
+=head1 PROPERTIES
+
+See Cache::Cache for default properties.
+
+=head1 SEE ALSO
+
+Cache::Cache
+
+=head1 AUTHOR
+
+Original author: DeWitt Clinton <dewitt@unto.net>
+
+Last author:     $Author: dclinton $
+
+Copyright (C) 2001 DeWitt Clinton
+
+=cut
 

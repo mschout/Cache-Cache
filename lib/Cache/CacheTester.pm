@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: CacheTester.pm,v 1.8 2001/09/05 14:39:27 dclinton Exp $
+# $Id: CacheTester.pm,v 1.16 2001/12/09 22:43:03 dclinton Exp $
 # Copyright (C) 2001 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -11,36 +11,50 @@
 package Cache::CacheTester;
 
 use strict;
-use Carp;
 use Cache::BaseCacheTester;
-use Cache::Cache qw( $SUCCESS $TRUE );
+use Cache::Cache;
+use Error qw( :try );
 
 use vars qw( @ISA $EXPIRES_DELAY );
 
 @ISA = qw ( Cache::BaseCacheTester );
 
 $EXPIRES_DELAY = 1;
+$Error::Debug = 1;
 
 sub test
 {
   my ( $self, $cache ) = @_;
 
-  $self->_test_one( $cache );
-  $self->_test_two( $cache );
-  $self->_test_three( $cache );
-  $self->_test_four( $cache );
-  $self->_test_five( $cache );
-  $self->_test_six( $cache );
-  $self->_test_seven( $cache );
-  $self->_test_eight( $cache );
-  $self->_test_nine( $cache );
-  $self->_test_ten( $cache );
-  $self->_test_eleven( $cache );
-  $self->_test_twelve( $cache );
-  $self->_test_thirteen( $cache );
-  $self->_test_fourteen( $cache );
-  $self->_test_fifteen( $cache );
-  $self->_test_sixteen( $cache );
+  try
+  {
+    $cache->Clear( );
+    $self->_test_one( $cache );
+    $self->_test_two( $cache );
+    $self->_test_three( $cache );
+    $self->_test_four( $cache );
+    $self->_test_five( $cache );
+    $self->_test_six( $cache );
+    $self->_test_seven( $cache );
+    $self->_test_eight( $cache );
+    $self->_test_nine( $cache );
+    $self->_test_ten( $cache );
+    $self->_test_eleven( $cache );
+    $self->_test_twelve( $cache );
+    $self->_test_thirteen( $cache );
+    $self->_test_fourteen( $cache );
+    $self->_test_fifteen( $cache );
+    $self->_test_sixteen( $cache );
+  }
+  catch Error with
+  {
+    my $error = shift;
+
+    print STDERR "\nError:\n";
+    print STDERR $error->stringify( ) . "\n";
+    print STDERR $error->stacktrace( ) . "\n";
+    print STDERR "\n";
+  }
 }
 
 
@@ -57,20 +71,14 @@ sub _test_one
 
   my $value = 'Test Value';
 
-  my $set_status = $cache->set( $key, $value );
-
-  ( $set_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
+  $cache->set( $key, $value );
 
   my $fetched_value = $cache->get( $key );
 
   ( $fetched_value eq $value ) ?
     $self->ok( ) : $self->not_ok( '$fetched_value eq $value' );
 
-  my $remove_status = $cache->remove( $key );
-
-  ( $remove_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$remove_status eq $SUCCESS' );
+  $cache->remove( $key );
 
   my $fetched_removed_value = $cache->get( $key );
 
@@ -92,10 +100,7 @@ sub _test_two
 
   my @value_list = ( 'One', 'Two', 'Three' );
 
-  my $set_status = $cache->set( $key, \@value_list );
-
-  ( $set_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
+  $cache->set( $key, \@value_list );
 
   my $fetched_value_list_ref = $cache->get( $key );
 
@@ -110,10 +115,7 @@ sub _test_two
     $self->not_ok( 'fetched list does not match set list' );
   }
 
-  my $remove_status = $cache->remove( $key );
-
-  ( $remove_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$remove_status eq $SUCCESS' );
+  $cache->remove( $key );
 
   my $fetched_removed_value = $cache->get( $key );
 
@@ -135,17 +137,11 @@ sub _test_three
 
   my $value = 'Test Value';
 
-  my $set_value_status = $cache->set( $key, $value );
-
-  ( $set_value_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$set_value_status eq $SUCCESS' );
+  $cache->set( $key, $value );
 
   my $cache_key = 'Cache Key';
 
-  my $set_cache_status = $cache->set( $cache_key, $cache );
-
-  ( $set_cache_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$set_cache_status eq $SUCCESS' );
+  $cache->set( $cache_key, $cache );
 
   my $fetched_cache = $cache->get( $cache_key );
 
@@ -171,17 +167,14 @@ sub _test_four
 
   my $value = 'Test Value';
 
-  my $set_status = $cache->set( $key, $value, $expires_in );
-
-  ( $set_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
+  $cache->set( $key, $value, $expires_in );
 
   my $fetched_value = $cache->get( $key );
 
   ( $fetched_value eq $value ) ?
     $self->ok( ) : $self->not_ok( '$fetched_value eq $value' );
 
-  sleep( $EXPIRES_DELAY );
+  sleep( $EXPIRES_DELAY + 1 );
 
   my $fetched_expired_value = $cache->get( $key );
 
@@ -204,10 +197,7 @@ sub _test_five
 
   my @value_list = ( 'One', 'Two', 'Three' );
 
-  my $set_status = $cache->set( $key, \@value_list );
-
-  ( $set_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
+  $cache->set( $key, \@value_list );
 
   @value_list = ( );
 
@@ -240,15 +230,9 @@ sub _test_six
 
   my $value = 'Test Value';
 
-  my $set_status = $cache->set( $key, $value );
+  $cache->set( $key, $value );
 
-  ( $set_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
-
-  my $clear_status = $cache->clear( );
-
-  ( $clear_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$clear_status eq $SUCCESS' );
+  $cache->clear( );
 
   my $fetched_cleared_value = $cache->get( $key );
 
@@ -272,10 +256,7 @@ sub _test_seven
 
   my $value = 'Test Value';
 
-  my $first_set_status = $cache->set( $first_key, $value );
-
-  ( $first_set_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$first_set_status eq $SUCCESS' );
+  $cache->set( $first_key, $value );
 
   my $first_size = $cache->size( );
 
@@ -284,10 +265,7 @@ sub _test_seven
 
   my $second_key = 'Second Test Key';
 
-  my $second_set_status = $cache->set( $second_key, $value );
-
-  ( $second_set_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$second_set_status eq $SUCCESS' );
+  $cache->set( $second_key, $value );
 
   my $second_size = $cache->size( );
 
@@ -302,10 +280,7 @@ sub _test_eight
 {
   my ( $self, $cache ) = @_;
 
-  my $clear_status = $cache->clear( );
-
-  ( $clear_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$clear_status eq $SUCCESS' );
+  $cache->clear( );
 
   my $empty_size = $cache->size( );
 
@@ -318,22 +293,16 @@ sub _test_eight
 
   my $value = 'Test Value';
 
-  my $set_status = $cache->set( $key, $value, $expires_in );
-
-  ( $set_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
+  $cache->set( $key, $value, $expires_in );
 
   my $pre_purge_size = $cache->size( );
 
   ( $pre_purge_size > $empty_size ) ?
     $self->ok( ) : $self->not_ok( '$pre_purge_size > $empty_size' );
 
-  sleep( $EXPIRES_DELAY );
+  sleep( $EXPIRES_DELAY + 1 );
 
-  my $purge_status = $cache->purge( );
-
-  ( $purge_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$purge_status eq $SUCCESS' );
+  $cache->purge( );
 
   my $post_purge_size = $cache->size( );
 
@@ -358,10 +327,7 @@ sub _test_nine
 
   my $value = 'Test Value';
 
-  my $set_status = $cache1->set( $key, $value );
-
-  ( $set_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
+  $cache1->set( $key, $value );
 
   my $fetched_value = $cache2->get( $key );
 
@@ -383,21 +349,14 @@ sub _test_ten
 
   my $value = 'Test Value';
 
-  my $set_status = $cache->set( $key, $value );
-
-  $set_status eq $SUCCESS ?
-    $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
-
+  $cache->set( $key, $value );
 
   my $full_size = $cache->Size( );
 
   ( $full_size > 0 ) ?
     $self->ok( ) : $self->not_ok( '$full_size > 0' );
 
-  my $clear_status = $cache->Clear( );
-
-  ( $clear_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$clear_status eq $SUCCESS' );
+  $cache->Clear( );
 
   my $empty_size = $cache->Size( );
 
@@ -412,10 +371,7 @@ sub _test_eleven
 {
   my ( $self, $cache ) = @_;
 
-  my $clear_status = $cache->Clear( );
-
-  ( $clear_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$clear_status eq $SUCCESS' );
+  $cache->Clear( );
 
   my $empty_size = $cache->Size( );
 
@@ -428,23 +384,16 @@ sub _test_eleven
 
   my $value = 'Test Value';
 
-  my $set_status = $cache->set( $key, $value, $expires_in );
-
-  $set_status eq $SUCCESS ?
-    $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
-
+  $cache->set( $key, $value, $expires_in );
 
   my $pre_purge_size = $cache->Size( );
 
   ( $pre_purge_size > $empty_size ) ?
     $self->ok( ) : $self->not_ok( '$pre_purge_size > $empty_size' );
 
-  sleep( $EXPIRES_DELAY );
+  sleep( $EXPIRES_DELAY + 1 );
 
-  my $purge_status = $cache->Purge( );
-
-  ( $purge_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$purge_status eq $SUCCESS' );
+  $cache->Purge( );
 
   my $purged_object = $cache->get_object( $key );
 
@@ -470,10 +419,7 @@ sub _test_twelve
 
   my $clear_method = "$class\:\:Clear";
 
-  my $clear_status = &$clear_method( );
-
-  ( $clear_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$clear_status eq $SUCCESS' );
+  &$clear_method( );
 
   my $size_method = "$class\:\:Size";
 
@@ -488,25 +434,18 @@ sub _test_twelve
 
   my $value = 'Test Value';
 
-  my $set_status = $cache->set( $key, $value, $expires_in );
-
-  $set_status eq $SUCCESS ?
-    $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
-
+  $cache->set( $key, $value, $expires_in );
 
   my $pre_purge_size = &$size_method( );
 
   ( $pre_purge_size > $empty_size ) ?
     $self->ok( ) : $self->not_ok( '$pre_purge_size > $empty_size' );
 
-  sleep( $EXPIRES_DELAY );
+  sleep( $EXPIRES_DELAY + 1 );
 
   my $purge_method = "$class\:\:Purge";
 
-  my $purge_status = &$purge_method( );
-
-  ( $purge_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$purge_status eq $SUCCESS' );
+  &$purge_method( );
 
   my $purged_object = $cache->get_object( $key );
 
@@ -530,17 +469,14 @@ sub _test_thirteen
 
   my $value = 'Test Value';
 
-  my $set_status = $cache->set( $key, $value, $expires_in );
-
-  ( $set_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
+  $cache->set( $key, $value, $expires_in );
 
   my $fetched_value = $cache->get( $key );
 
   ( $fetched_value eq $value ) ?
     $self->ok( ) : $self->not_ok( '$fetched_value eq $value' );
 
-  sleep( $EXPIRES_DELAY );
+  sleep( $EXPIRES_DELAY + 1 );
 
   my $fetched_expired_value = $cache->get( $key );
 
@@ -549,37 +485,31 @@ sub _test_thirteen
 }
 
 
-# test the get_identifiers method
+# test the get_keys method
 
 sub _test_fourteen
 {
   my ( $self, $cache ) = @_;
 
-  my $clear_status = $cache->Clear( );
-
-  ( $clear_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$clear_status eq $SUCCESS' );
+  $cache->Clear( );
 
   my $empty_size = $cache->Size( );
 
   ( $empty_size == 0 ) ?
     $self->ok( ) : $self->not_ok( '$empty_size == 0' );
 
-  my @identifiers = sort ( 'John', 'Paul', 'Ringo', 'George' );
+  my @keys = sort ( 'John', 'Paul', 'Ringo', 'George' );
 
   my $value = 'Test Value';
 
-  foreach my $identifier ( @identifiers )
+  foreach my $key ( @keys )
   {
-    my $set_status = $cache->set( $identifier, $value );
-
-    $set_status eq $SUCCESS ?
-      $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
+    $cache->set( $key, $value );
   }
 
-  my @cached_identifiers = sort $cache->get_identifiers( );
+  my @cached_keys = sort $cache->get_keys( );
 
-  my $arrays_equal = Arrays_Are_Equal( \@identifiers, \@cached_identifiers );
+  my $arrays_equal = Arrays_Are_Equal( \@keys, \@cached_keys );
 
   ( $arrays_equal == 1 ) ?
     $self->ok( ) : $self->not_ok( '$arrays_equal == 1' );
@@ -592,47 +522,35 @@ sub _test_fifteen
 {
   my ( $self, $cache ) = @_;
 
-  my $clear_status = $cache->Clear( );
+  $cache->Clear( );
 
-  ( $clear_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$clear_status eq $SUCCESS' );
-
-  my $expires_in = "1 second";
+  my $expires_in = "2 second";
 
   $cache->set_auto_purge_interval( $expires_in );
 
-  $cache->set_auto_purge_on_set( $TRUE );
+  $cache->set_auto_purge_on_set( 1 );
 
   my $key = 'Test Key';
 
   my $value = 'Test Value';
 
-  my $set_status = $cache->set( $key, $value, $expires_in );
-
-  ( $set_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
+  $cache->set( $key, $value, $expires_in );
 
   my $fetched_value = $cache->get( $key );
 
   ( $fetched_value eq $value ) ?
     $self->ok( ) : $self->not_ok( '$fetched_value eq $value' );
 
-  sleep( $EXPIRES_DELAY );
+  sleep( $EXPIRES_DELAY + 1 );
 
-  $set_status = $cache->set( "Trigger auto_purge", "Empty" );
-
-  ( $set_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$set_status eq $SUCCESS' );
+  $cache->set( "Trigger auto_purge", "Empty" );
 
   my $fetched_expired_object = $cache->get_object( $key );
 
   ( not defined $fetched_expired_object ) ?
     $self->ok( ) : $self->not_ok( 'not defined $fetched_expired_object' );
 
-  $clear_status = $cache->Clear( );
-
-  ( $clear_status eq $SUCCESS ) ?
-    $self->ok( ) : $self->not_ok( '$clear_status eq $SUCCESS' );
+  $cache->Clear( );
 }
 
 
@@ -651,7 +569,7 @@ sub _test_sixteen
   };
 
   ( not defined @$ ) ?
-    $self->ok( ) : $self->not_ok( '$clear_status eq $SUCCESS' );
+    $self->ok( ) : $self->not_ok( "couldn't create autopurge cache" );
 }
 
 
@@ -676,4 +594,57 @@ sub Arrays_Are_Equal
 
 1;
 
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Cache::CacheTester -- a class for regression testing caches
+
+=head1 DESCRIPTION
+
+The CacheTester is used to verify that a cache implementation honors
+its contract.
+
+=head1 SYNOPSIS
+
+  use Cache::MemoryCache;
+  use Cache::CacheTester;
+
+  my $cache = new Cache::MemoryCache( );
+
+  my $cache_tester = new Cache::CacheTester( 1 );
+
+  $cache_tester->test( $cache );
+
+=head1 METHODS
+
+=over
+
+=item B<new( $initial_count )>
+
+Construct a new CacheTester object, with the counter starting at
+I<$initial_count>.
+
+=item B<test( )>
+
+Run the tests.
+
+=back
+
+=head1 SEE ALSO
+
+Cache::Cache, Cache::BaseCacheTester
+
+=head1 AUTHOR
+
+Original author: DeWitt Clinton <dewitt@unto.net>
+
+Last author:     $Author: dclinton $
+
+Copyright (C) 2001 DeWitt Clinton
+
+=cut
 

@@ -11,17 +11,29 @@ NAME
 
 DESCRIPTION
 
-  The Perl Cache package provides Cache::Cache, a generic interface
+  The Cache modules are designed to assist a developer in persisting
+  data for a specified period of time.  Often these modules are used
+  in web applications to store data locally to save repeated and
+  redundant expensive calls to remote machines or databases.  People
+  have also been known to use Cache::Cache for its straightforward
+  interface in sharing data between runs of an application or
+  invocations of a CGI-style script or simply as an easy to use
+  abstraction of the filesystem or shared memory.
+
+  The Cache package provides Cache::Cache, a generic interface
   for creating persistent data stores.  This interface is implemented
   by the Cache::MemoryCache, Cache::SharedMemoryCache, Cache::FileCache, 
   Cache::SizeAwareFileCache, Cache::SizeAwareMemoryCache, and 
-  Cache::SizeAwareSharedMemoryCache classes.  This work replaces 
-  File::Cache and IPC::Cache.
+  Cache::SizeAwareSharedMemoryCache classes. 
+
+  This work aggregates and extends the obsolete File::Cache and
+  IPC::Cache projects.
 
 
 REQUIREMENTS
 
   Digest::MD5
+  Error
   File::Spec
   File::Path
   IPC::ShareLite
@@ -56,43 +68,49 @@ USAGE
   SizeAwareSharedMemoryCache add size management functionality
   to the MemoryCache and SharedMemoryCache classes respectively.
 
- 
   Using a cache is simple.  Here is some sample code for instantiating
-  and using a MemoryCache:
+  and using a file system based cache.
 
-    use Cache::Cache qw( $EXPIRES_NEVER $EXPIRES_NOW );
-    use Cache::MemoryCache;
+    use Cache::FileCache;
 
-    my $options_hash_ref = { 'default_expires_in' => '10 seconds' };
+    my $cache = new Cache::FileCache( );
 
-    my $cache = new Cache::MemoryCache( $options_hash_ref );
+    my $customer = $cache->get( $name );
 
-    my $expires_in = '10 minutes';
+    if ( not defined $customer )
+    {
+      $customer = get_customer_from_db( $name );
+      $cache->set( $name, $customer, "10 minutes" );
+    }
 
-    $cache->set( 'Key', 'Value', $expires_in );
-
-    # if the next line is called within 10 minutes, then this 
-    # will return the cache value
-
-    my $value = $cache->get( 'Key' );
-
+    return $customer;
 
   Please refer to the perldoc for Cache::Cache and the related
   implementations for complete documentation.
 
 
+INCOMPATIBLE CHANGES
+
+  Cache::Cache 0.99 contains the following incompatible changes:
+
+    * Error::Simple is thrown on exceptions
+
+    * the get_identifiers method has been deprecated in favor of the
+      get_keys method
+
+    * the internal format of object in a FileCache has been modified,
+      necessitating a clearing of the cache while upgrading (make test 
+      does this for the standard cache root)
+
+
 SEE ALSO
 
-  File::Cache and IPC::Cache, and the project homepage at:
-
-    http://sourceforge.net/projects/perl-cache/
+  The project homepage at http://perl-cache.sourceforge.net
 
 
 AUTHOR
 
   Original author: DeWitt Clinton <dewitt@unto.net>
-
-  Last author:     $Author: dclinton $
 
   Copyright (C) 2001 DeWitt Clinton
 

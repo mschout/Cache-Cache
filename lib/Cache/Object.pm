@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Object.pm,v 1.4 2001/03/22 21:41:35 dclinton Exp $
+# $Id: Object.pm,v 1.7 2001/12/09 22:43:03 dclinton Exp $
 # Copyright (C) 2001 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -10,10 +10,7 @@
 
 package Cache::Object;
 
-
-##
-# Constructor
-##
+use strict;
 
 
 sub new
@@ -26,11 +23,6 @@ sub new
 }
 
 
-##
-# Instance properties
-##
-
-
 sub get_created_at
 {
   my ( $self ) = @_;
@@ -40,9 +32,9 @@ sub get_created_at
 
 sub set_created_at
 {
-  my ( $self, $created_at ) = @_;
+  my ( $self, $p_created_at ) = @_;
 
-  $self->{_Created_At} = $created_at;
+  $self->{_Created_At} = $p_created_at;
 }
 
 
@@ -55,9 +47,9 @@ sub get_accessed_at
 
 sub set_accessed_at
 {
-  my ( $self, $accessed_at ) = @_;
+  my ( $self, $p_accessed_at ) = @_;
 
-  $self->{_Accessed_At} = $accessed_at;
+  $self->{_Accessed_At} = $p_accessed_at;
 }
 
 
@@ -70,9 +62,9 @@ sub get_data
 
 sub set_data
 {
-  my ( $self, $data ) = @_;
+  my ( $self, $p_data ) = @_;
 
-  $self->{_Data} = $data;
+  $self->{_Data} = $p_data;
 }
 
 
@@ -86,26 +78,27 @@ sub get_expires_at
 
 sub set_expires_at
 {
-  my ( $self, $expires_at ) = @_;
+  my ( $self, $p_expires_at ) = @_;
 
-  $self->{_Expires_At} = $expires_at;
+  $self->{_Expires_At} = $p_expires_at;
 }
 
 
-sub get_identifier
+sub get_key
 {
   my ( $self ) = @_;
 
-  return $self->{_Identifier};
+  return $self->{_Key};
 }
 
 
-sub set_identifier
+sub set_key
 {
-  my ( $self, $identifier ) = @_;
+  my ( $self, $p_key ) = @_;
 
-  $self->{_Identifier} = $identifier;
+  $self->{_Key} = $p_key;
 }
+
 
 
 sub get_size
@@ -118,10 +111,32 @@ sub get_size
 
 sub set_size
 {
-  my ( $self, $size ) = @_;
+  my ( $self, $p_size ) = @_;
 
-  $self->{_Size} = $size;
+  $self->{_Size} = $p_size;
 }
+
+
+sub get_identifier
+{
+  my ( $self ) = @_;
+
+  warn( "get_identifier has been marked deprepricated.  use get_key" );
+
+  return $self->get_key( );
+}
+
+
+sub set_identifier
+{
+  my ( $self, $p_identifier ) = @_;
+
+  warn( "set_identifier has been marked deprepricated.  use set_key" );
+
+  return $self->set_key( $p_identifier );
+}
+
+
 
 
 1;
@@ -148,7 +163,7 @@ on the Cache::Cache interface.
 
  my $object = new Cache::Object( );
 
- $object->set_identifier( $identifier );
+ $object->set_key( $key );
  $object->set_data( $data );
  $object->set_expires_at( $expires_at );
  $object->set_created_at( $created_at );
@@ -156,7 +171,7 @@ on the Cache::Cache interface.
 
 =head1 METHODS
 
-=over 4
+=over
 
 =item B<new(  )>
 
@@ -166,7 +181,7 @@ Construct a new Cache::Object.
 
 =head1 PROPERTIES
 
-=over 4
+=over
 
 =item B<(get|set)_accessed_at>
 
@@ -187,7 +202,7 @@ A scalar containing or a reference pointing to the data to be stored.
 
 The time at which the object should expire from the cache.
 
-=item B<(get|set)_identifier>
+=item B<(get|set)_key>
 
 The key under which the object was stored.
 
