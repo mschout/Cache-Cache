@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: FileBackend.pm,v 1.23 2003/04/15 14:46:22 dclinton Exp $
+# $Id: FileBackend.pm,v 1.26 2004/10/04 18:29:20 dclinton Exp $
 # Copyright (C) 2001-2003 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -15,6 +15,7 @@ use Cache::CacheUtils qw( Assert_Defined Build_Path Freeze_Data Thaw_Data );
 use Digest::SHA1 qw( sha1_hex );
 use Error;
 use File::Path qw( mkpath );
+use File::Temp qw( tempfile );
 
 
 # the file mode for new directories, which will be modified by the
@@ -267,7 +268,7 @@ sub _Read_Dirents
   my @dirents = readdir( Dir );
 
   closedir( Dir ) or
-    throw Error::Simple( "Couldn't close directory $p_directory" );
+    throw Error::Simple( "Couldn't close directory $p_directory: $!" );
 
   return @dirents;
 }
@@ -556,21 +557,27 @@ sub _Write_File
 
   umask( $p_optional_umask ) if $p_optional_umask;
 
-  my $temp_path = _Untaint_Path( "$p_path.tmp$$" );
+  my ( $volume, $directory, $filename ) = File::Spec->splitpath( $p_path );
 
-  local *File;
+  my ( $temp_fh, $temp_filename ) = tempfile( DIR => $directory );
 
-  open( File, ">$temp_path" ) or
-    throw Error::Simple( "Couldn't open $temp_path for writing: $!" );
+  binmode( $temp_fh );
 
-  binmode( File );
+  print $temp_fh $$p_data_ref;
 
-  print File $$p_data_ref;
+  close( $temp_fh );
 
-  close( File );
+  -e $temp_filename or
+    throw Error::Simple( "Temp file '$temp_filename' does not exist: $!" );
+  
+  rename( $temp_filename, _Untaint_Path( $p_path ) ) or
+    throw Error::Simple( "Couldn't rename $temp_filename to $p_path: $!" );
 
-  rename( $temp_path, _Untaint_Path( $p_path ) ) or
-    throw Error::Simple( "Couldn't rename $temp_path to $p_path" );
+  if ( -e $temp_filename ) 
+  {
+    _Remove_File( $temp_filename );
+    warn( "Temp file '$temp_filename' shouldn't still exist" );
+  }
 
   chmod( $p_optional_mode, _Untaint_Path($p_path) ) if
     defined $p_optional_mode;
@@ -641,7 +648,7 @@ sub _read_data
 
   my $data_ref = eval{ Thaw_Data( $$frozen_data_ref ) };
   
-  if ( $@ ) 
+  if ( $@ || ( ref( $data_ref ) ne 'ARRAY' ) ) 
   {
     unlink _Untaint_Path( $p_path );
     return [ undef, undef ];
