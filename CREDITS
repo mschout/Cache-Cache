@@ -1,3 +1,25 @@
+- Yves Orton <yves.orton@mciworldcom.de>, a CPAN tester, submitted a
+  patch to _Make_Path to fix warnings on Win32
+
+- Adam Tricket <ATricket@alarismed.com> and <yves.orton@mciworldcom.de> 
+  helped debug the make test failure (due to fileglobs in Makefile.PL) on 
+  Windows
+
+- Christian Gilmore <cgilmore@tivoli.com> suggested that I expose the
+  get_namespaces method through the Cache interface
+
+- Jonathan Swartz submitted a patch for a much better untainting regex
+
+- Richard Chen <chenri@snet.net> informed me of a better way to call
+  static methods without knowing the type of the class until runtime
+
+- Christophe Marcant <christophe@marcant.org> offered a patch to allow
+  spaces to be used in the filenames
+
+- Eric Cholet <cholet@logilune.com> offered a patch to fix the missing
+  import in Cache::CacheUtils and is helping debug using a Backend on
+  its own
+
 - Axel Beckert <abe@cs.uni-sb.de> submitted a patch to fix a bug in
   the expiration units
 

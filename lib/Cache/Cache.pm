@@ -1,5 +1,5 @@
 #####################################################################
-# $Id: Cache.pm,v 1.27 2001/12/09 22:43:03 dclinton Exp $
+# $Id: Cache.pm,v 1.35 2002/04/07 00:05:50 dclinton Exp $
 # Copyright (C) 2001 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -20,7 +20,7 @@ use Exporter;
 
 @EXPORT_OK = qw( $VERSION $EXPIRES_NOW $EXPIRES_NEVER );
 
-$VERSION = 0.99;
+$VERSION = "1.0";
 $EXPIRES_NOW = 'now';
 $EXPIRES_NEVER = 'never';
 
@@ -61,17 +61,11 @@ sub get_auto_purge_interval;
 
 sub set_auto_purge_interval;
 
-sub get_auto_purge_interval;
-
-sub set_auto_purge_interval;
-
 sub get_auto_purge_on_set;
 
 sub set_auto_purge_on_set;
 
-sub get_auto_purge_on_get;
-
-sub set_auto_purge_on_get;
+sub get_namespaces;
 
 sub get_identifiers;  # deprecated
 
@@ -107,7 +101,7 @@ corresponding static methods for persisting data across method calls.
 
 First, choose the best type of cache implementation for your needs.
 The simplest cache is the MemoryCache, which is suitable for
-applications that are serving multiple sequential requests, and which
+applications that are serving multiple sequential requests, and wish
 to avoid making redundant expensive queries, such as an
 Apache/mod_perl application talking to a database.  If you wish to
 share that data between processes, then perhaps the SharedMemoryCache
@@ -222,6 +216,10 @@ objects.
 
 Returns the total size of all objects in the namespace associated with
 this cache instance.
+
+=item B<get_namespaces( )>
+
+Returns all the namespaces associated with this type of cache.
 
 =back
 

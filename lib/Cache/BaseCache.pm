@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: BaseCache.pm,v 1.22 2001/12/09 17:00:35 dclinton Exp $
+# $Id: BaseCache.pm,v 1.23 2002/03/29 15:00:10 dclinton Exp $
 # Copyright (C) 2001 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -307,6 +307,14 @@ sub size
   }
 
   return $size;
+}
+
+
+sub get_namespaces
+{
+  my ( $self ) = @_;
+
+  return $self->_get_backend( )->get_namespaces( );
 }
 
 

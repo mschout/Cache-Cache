@@ -1,5 +1,16 @@
 Revision history for Cache
 
+1.0 2002-04-06-18-51
+ - released vresion 1.0
+ - localized scope of global file and directory handles (FILE and DIR)
+ - applied Jonathan Swartz's patch for a much better untainting regex
+ - changed _Untaint_String to throw an exception on a taint
+ - further improved the fix to prevent race conditions that caused the
+   tests to fail
+ - exposed the get_namespaces method on Cache
+ - fixed the failing Win32 tests caused by fileglobs in Makefile.PL
+ - applied Yves Orton's patch in _Make_Path to fix warnings on Win32
+
 0.99 2001-12-09-18-45
  - released version 0.99
  - major refactoring of code
@@ -15,7 +26,7 @@ Revision history for Cache
    caches to consistently reflect the total size of the objects on disk,
    but not including the directory overhead
  - changed format of persisted data in the FileBackend
- - major rewrite of documentatoin
+ - major rewrite of documentation
 
 0.09 2001-09-10-12-10
  - released version 0.09

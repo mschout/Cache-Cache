@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: CacheTester.pm,v 1.16 2001/12/09 22:43:03 dclinton Exp $
+# $Id: CacheTester.pm,v 1.19 2002/03/29 15:00:10 dclinton Exp $
 # Copyright (C) 2001 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -19,7 +19,7 @@ use vars qw( @ISA $EXPIRES_DELAY );
 
 @ISA = qw ( Cache::BaseCacheTester );
 
-$EXPIRES_DELAY = 1;
+$EXPIRES_DELAY = 2;
 $Error::Debug = 1;
 
 sub test
@@ -45,6 +45,7 @@ sub test
     $self->_test_fourteen( $cache );
     $self->_test_fifteen( $cache );
     $self->_test_sixteen( $cache );
+    $self->_test_seventeen( $cache );
   }
   catch Error with
   {
@@ -404,10 +405,6 @@ sub _test_eleven
 
 # Test Purge(), Clear(), and Size() as static methods
 
-# TODO:  If someone knows the syntax for calling methods statically
-# without resorting to the two step process I used below, please
-# let me know!
-
 sub _test_twelve
 {
   my ( $self, $cache ) = @_;
@@ -417,13 +414,9 @@ sub _test_twelve
 
   no strict 'refs';
 
-  my $clear_method = "$class\:\:Clear";
+  &{"${class}::Clear"}( );
 
-  &$clear_method( );
-
-  my $size_method = "$class\:\:Size";
-
-  my $empty_size = &$size_method( );
+  my $empty_size = &{"${class}::Size"}( );
 
   ( $empty_size == 0 ) ?
     $self->ok( ) : $self->not_ok( '$empty_size == 0' );
@@ -436,16 +429,14 @@ sub _test_twelve
 
   $cache->set( $key, $value, $expires_in );
 
-  my $pre_purge_size = &$size_method( );
+  my $pre_purge_size = &{"${class}::Size"}( );
 
   ( $pre_purge_size > $empty_size ) ?
     $self->ok( ) : $self->not_ok( '$pre_purge_size > $empty_size' );
 
   sleep( $EXPIRES_DELAY + 1 );
 
-  my $purge_method = "$class\:\:Purge";
-
-  &$purge_method( );
+  &{"${class}::Purge"}( );
 
   my $purged_object = $cache->get_object( $key );
 
@@ -463,7 +454,7 @@ sub _test_thirteen
 {
   my ( $self, $cache ) = @_;
 
-  my $expires_in = "1 second";
+  my $expires_in = $EXPIRES_DELAY;
 
   my $key = 'Test Key';
 
@@ -524,7 +515,7 @@ sub _test_fifteen
 
   $cache->Clear( );
 
-  my $expires_in = "2 second";
+  my $expires_in = $EXPIRES_DELAY;
 
   $cache->set_auto_purge_interval( $expires_in );
 
@@ -561,7 +552,7 @@ sub _test_sixteen
 {
   my ( $self, $cache ) = @_;
 
-  my $expires_in = "1 second";
+  my $expires_in = $EXPIRES_DELAY;
 
   eval
   {
@@ -572,6 +563,27 @@ sub _test_sixteen
     $self->ok( ) : $self->not_ok( "couldn't create autopurge cache" );
 }
 
+
+# test the get_namespaces method
+
+sub _test_seventeen
+{
+  my ( $self, $cache ) = @_;
+
+  $cache->set( 'foo', 'bar' );
+
+  if ( Arrays_Are_Equal( [ sort( $cache->get_namespaces( ) ) ],
+                         [ sort( 'Default', '__AUTO_PURGE__' ) ] ) )
+  {
+    $self->ok( );
+  }
+  else
+  {
+    $self->not_ok( "get_namespaces returned the wrong namespaces" );
+  }
+
+  $cache->Clear( );
+}
 
 
 
