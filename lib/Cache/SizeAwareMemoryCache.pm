@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: SizeAwareMemoryCache.pm,v 1.6 2001/03/23 00:15:06 dclinton Exp $
+# $Id: SizeAwareMemoryCache.pm,v 1.9 2001/04/25 22:22:04 dclinton Exp $
 # Copyright (C) 2001 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -115,6 +115,9 @@ sub get
   $identifier or
     croak( "identifier required" );
 
+  $self->_conditionally_auto_purge_on_get( ) or
+    croak( "Couldn't conditionally auto purge on get" );
+
   my $object = $self->get_object( $identifier ) or
     return undef;
 
@@ -142,14 +145,17 @@ sub set
 {
   my ( $self, $identifier, $data, $expires_in ) = @_;
 
+  $self->_conditionally_auto_purge_on_set( ) or
+    croak( "Couldn't conditionally auto purge on set" );
+
   my $default_expires_in = $self->get_default_expires_in( );
 
   my $object =
     Build_Object( $identifier, $data, $default_expires_in, $expires_in ) or
       croak( "Couldn't build cache object" );
 
-  $self->_store( $identifier, $object ) or
-    croak( "Couldn't store $identifier" );
+  $self->set_object( $identifier, $object ) or
+    croak( "Couldn't set object" );
 
   my $max_size = $self->get_max_size();
 
@@ -157,6 +163,17 @@ sub set
   {
     $self->limit_size( $max_size );
   }
+
+  return $SUCCESS;
+}
+
+
+sub set_object
+{
+  my ( $self, $identifier, $object ) = @_;
+
+  $self->_store( $identifier, $object ) or
+    croak( "Couldn't store $identifier" );
 
   return $SUCCESS;
 }
@@ -278,10 +295,14 @@ See Cache::Cache
 
 Constructs a new SizeAwareMemoryCache
 
-=item C<$options_hash_ref>
+=over 4
+
+=item $options_hash_ref
 
 A reference to a hash containing configuration options for the cache.
 See the section OPTIONS below.
+
+=back
 
 =item B<clear(  )>
 

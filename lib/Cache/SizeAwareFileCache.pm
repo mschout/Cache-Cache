@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: SizeAwareFileCache.pm,v 1.14 2001/03/23 00:15:06 dclinton Exp $
+# $Id: SizeAwareFileCache.pm,v 1.17 2001/04/25 22:22:04 dclinton Exp $
 # Copyright (C) 2001 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -20,6 +20,7 @@ use Cache::CacheUtils qw ( Build_Object
                            Build_Unique_Key
                            Limit_Size
                            Make_Path
+                           Object_Has_Expired
                            Recursively_List_Files
                            Remove_File
                            Static_Params
@@ -32,7 +33,6 @@ use Carp;
 @ISA = qw ( Cache::FileCache Cache::SizeAwareCache );
 
 my $DEFAULT_MAX_SIZE = $NO_MAX_SIZE;
-
 
 ##
 # Public class methods
@@ -99,6 +99,9 @@ sub set
 {
   my ( $self, $identifier, $data, $expires_in ) = @_;
 
+  $self->_conditionally_auto_purge_on_set( ) or
+    croak( "Couldn't conditionally auto purge on set" );
+
   my $default_expires_in = $self->get_default_expires_in( );
 
   my $object =
@@ -121,38 +124,6 @@ sub set
   return $SUCCESS;
 }
 
-
-
-sub _build_cache_meta_data
-{
-  my ( $self ) = @_;
-
-  my $namespace_path = $self->_build_namespace_path( ) or
-    croak( "Couldn't build namespace path" );
-
-  defined( $namespace_path ) or
-    croak( "namespace_path required" );
-
-  my $cache_meta_data = new Cache::CacheMetaData( ) or
-    croak( "Couldn't instantiate new CacheMetaData" );
-
-  my @filenames;
-
-  Recursively_List_Files( $namespace_path, \@filenames );
-
-  foreach my $filename ( @filenames )
-  {
-    my $object = $self->_restore( $filename ) or
-      next;
-
-    my $size = $object->get_size( );
-
-    $cache_meta_data->insert( $object ) or
-      croak( "Couldn't insert meta data" );
-  }
-
-  return $cache_meta_data;
-}
 
 
 sub limit_size
@@ -200,6 +171,38 @@ sub _initialize_max_size
 }
 
 
+sub _build_cache_meta_data
+{
+  my ( $self ) = @_;
+
+  my $namespace_path = $self->_build_namespace_path( ) or
+    croak( "Couldn't build namespace path" );
+
+  defined( $namespace_path ) or
+    croak( "namespace_path required" );
+
+  my $cache_meta_data = new Cache::CacheMetaData( ) or
+    croak( "Couldn't instantiate new CacheMetaData" );
+
+  my @filenames;
+
+  Recursively_List_Files( $namespace_path, \@filenames );
+
+  foreach my $filename ( @filenames )
+  {
+    my $object = $self->_restore( $filename ) or
+      next;
+
+    my $size = $object->get_size( );
+
+    $cache_meta_data->insert( $object ) or
+      croak( "Couldn't insert meta data" );
+  }
+
+  return $cache_meta_data;
+}
+
+
 ##
 # Instance properties
 ##
@@ -219,6 +222,7 @@ sub set_max_size
 
   $self->{_Max_Size} = $max_size;
 }
+
 
 
 1;
@@ -259,37 +263,53 @@ the documentation for Cache::FileCache for more information.
 
 See Cache::Cache
 
-=item C<$optional_cache_root>
+=over 4
+
+=item $optional_cache_root
 
 If specified, this indicates the root on the filesystem of the cache
 to be cleared.
+
+=back
 
 =item B<Purge( $optional_cache_root )>
 
 See Cache::Cache
 
-=item C<$optional_cache_root>
+=over 4
+
+=item $optional_cache_root
 
 If specified, this indicates the root on the filesystem of the cache
 to be purged.
+
+=back
 
 =item B<Size( $optional_cache_root )>
 
 See Cache::Cache
 
-=item C<$optional_cache_root>
+=over 4
+
+=item $optional_cache_root
 
 If specified, this indicates the root on the filesystem of the cache
 to be sized.
+
+=back
 
 =item B<new( $options_hash_ref )>
 
 Constructs a new SizeAwareFileCache
 
-=item C<$options_hash_ref>
+=over 4
+
+=item $options_hash_ref
 
 A reference to a hash containing configuration options for the cache.
 See the section OPTIONS below.
+
+=back
 
 =item B<clear(  )>
 

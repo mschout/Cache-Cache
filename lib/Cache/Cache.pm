@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Cache.pm,v 1.13 2001/03/27 15:43:02 dclinton Exp $
+# $Id: Cache.pm,v 1.17 2001/04/26 12:37:11 dclinton Exp $
 # Copyright (C) 2001 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -40,7 +40,7 @@ use Exporter;
 use vars @EXPORT_OK;
 
 
-$VERSION = 0.07;
+$VERSION = 0.08;
 $EXPIRES_NOW = 'now';
 $EXPIRES_NEVER = 'never';
 $TRUE = 1;
@@ -57,9 +57,7 @@ $FAILURE = 0;
 
 sub Clear;
 
-
 sub Purge;
-
 
 sub Size;
 
@@ -79,21 +77,17 @@ sub new;
 
 sub clear;
 
-
 sub get;
-
 
 sub get_object;
 
-
 sub purge;
-
 
 sub remove;
 
-
 sub set;
 
+sub set_object;
 
 sub size;
 
@@ -105,11 +99,29 @@ sub size;
 
 sub get_default_expires_in;
 
-
 sub get_namespace;
 
+sub set_namespace;
 
 sub get_identifiers;
+
+sub get_auto_purge_interval;
+
+sub set_auto_purge_interval;
+
+sub get_auto_purge_interval;
+
+sub set_auto_purge_interval;
+
+sub get_auto_purge_on_set;
+
+sub set_auto_purge_on_set;
+
+sub get_auto_purge_on_get;
+
+sub set_auto_purge_on_get;
+
+
 
 
 1;
@@ -214,48 +226,70 @@ The item being set in the cache will never expire.
 
 Remove all objects from all caches of this type.
 
+=over 4
+
 =item Returns
 
-Either $SUCCESS or $FAILURE
+Either $SUCCESS or $FAILURE.
+
+=back
 
 =item B<Purge( )>
 
 Remove all objects that have expired from all caches of this type.
 
+=over 4
+
 =item Returns
 
-Either $SUCCESS or $FAILURE
+Either $SUCCESS or $FAILURE.
+
+=back
 
 =item B<Size( $optional_namespace )>
 
 Calculate the total size of all objects in all caches of this type.
 
+=over 4
+
 =item Returns
 
 The total size of all the objects in all caches of this type.
+
+=back
 
 =item B<new( $options_hash_ref )>
 
 Construct a new instance of a Cache::Cache
 
-=item C<$options_hash_ref>
+=over 4
+
+=item $options_hash_ref
 
 A reference to a hash containing configuration options for the cache.
 See the section OPTIONS below.
+
+=back
 
 =item B<clear(  )>
 
 Remove all objects from the namespace associated with this cache instance.
 
+=over 4
+
 =item Returns
 
-Either $SUCCESS or $FAILURE
+Either $SUCCESS or $FAILURE.
+
+=back
 
 =item B<get( $identifier )>
 
 Fetch the data specified.
 
-=item C<$identifier>
+=over 4
+
+=item $identifier
 
 A string uniquely identifying the data.
 
@@ -263,13 +297,17 @@ A string uniquely identifying the data.
 
 The data specified.
 
+=back
+
 =item B<get_object( $identifier )>
 
 Fetch the underlying Cache::Object object that is used to store the
 cached data.  This will not trigger a removal of the cached object
 even if the object has expired.
 
-=item C<$identifier>
+=over 4
+
+=item $identifier
 
 A string uniquely identifying the data.
 
@@ -277,38 +315,73 @@ A string uniquely identifying the data.
 
 The underlying Cache::Object object, which may or may not have expired.
 
+=back
+
+=item B<set_object( $identifier, $object )>
+
+Stores the underlying Cache::Object object that is to be cached.  Using
+set_object (as opposed to set) does not trigger an automatic purge.
+
+=over 4
+
+=item $identifier
+
+A string uniquely identifying the data.
+
+=item $object
+
+The underlying Cache::Object object to be stored.
+
+=item Returns
+
+Either $SUCCESS or $FAILURE.
+
+=back
+
 =item B<purge(  )>
 
 Remove all objects that have expired from the namespace associated
 with this cache instance.
 
+=over 4
+
 =item Returns
 
-Either $SUCCESS or $FAILURE
+Either $SUCCESS or $FAILURE.
+
+=back
 
 =item B<remove( $identifier )>
 
 Delete the data associated with the $identifier from the cache.
 
-=item C<$identifier>
+=over 4
+
+=item $identifier
 
 A string uniquely identifying the data.
 
 =item Returns
 
-Either $SUCCESS or $FAILURE
+Either $SUCCESS or $FAILURE.
+
+=back
 
 =item B<set( $identifier, $data, $expires_in )>
 
-=item C<$identifier>
+Store an item in the cache
+
+=over 4
+
+=item $identifier
 
 A string uniquely identifying the data.
 
-=item C<$data>
+=item $data
 
 A scalar or reference to the object to be stored.
 
-=item C<$expires_in>
+=item $expires_in
 
 Either the time in seconds until this data should be erased, or the
 constant $EXPIRES_NOW, or the constant $EXPIRES_NEVER.  Defaults to
@@ -321,17 +394,23 @@ be represented as "now" and $EXPIRES_NEVER can be represented as
 
 =item Returns
 
-Either $SUCCESS or $FAILURE
+Either $SUCCESS or $FAILURE.
+
+=back
 
 =item B<size(  )>
 
 Calculate the total size of all objects in the namespace associated with
 this cache instance.
 
+=over 4
+
 =item Returns
 
 The total size of all objects in the namespace associated with this
 cache instance.
+
+=back
 
 =back
 
@@ -352,13 +431,30 @@ not explicitly set.
 The default expiration time for objects place in the cache.  Defaults
 to $EXPIRES_NEVER if not explicitly set.
 
+=item auto_purge_interval
+
+Sets the auto purge interval.  If this option is set to a particular
+time ( in the same format as the expires_in ), then the purge( )
+routine will be called during the first set after the interval
+expires.  The interval will then be reset.
+
+=item auto_purge_on_set
+
+If this option is true, then the auto purge interval routine will be
+checked on every set.
+
+=item auto_purge_on_get
+
+If this option is true, then the auto purge interval routine will be
+checked on every get.
+
 =back
 
 =head1 PROPERTIES
 
 =over 4
 
-=item B<get_namespace( )>
+=item B<(get|set)_namespace( )>
 
 The namespace of this cache instance
 
@@ -370,6 +466,23 @@ The default expiration time for objects placed in this cache instance
 
 The list of identifiers specifying objects in the namespace associated
 with this cache instance
+
+=item B<(get|set)_auto_purge_interval( )>
+
+Accesses the auto purge interval.  If this option is set to a particular
+time ( in the same format as the expires_in ), then the purge( )
+routine will be called during the first get after the interval
+expires.  The interval will then be reset.
+
+=item B<(get|set)_auto_purge_on_set( )>
+
+If this property is true, then the auto purge interval routine will be
+checked on every set.
+
+=item B<(get|set)_auto_purge_on_get( )>
+
+If this property is true, then the auto purge interval routine will be
+checked on every get.
 
 =back
 

@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: CacheUtils.pm,v 1.17 2001/03/25 18:13:16 dclinton Exp $
+# $Id: CacheUtils.pm,v 1.20 2001/04/25 22:22:04 dclinton Exp $
 # Copyright (C) 2001 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -544,6 +544,8 @@ sub Recursively_List_Files
 {
   my ( $directory, $files_ref ) = @_;
 
+  return $SUCCESS unless -d $directory;
+
   opendir( DIR, $directory ) or
     croak( "Couldn't open directory $directory: $!" );
 
@@ -885,5 +887,6 @@ sub Update_Access_Time
 
   return $SUCCESS;
 }
+
 
 1;

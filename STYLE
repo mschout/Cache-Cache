@@ -14,10 +14,59 @@ outline the style for this project.
                     -----------------------------
 
 Avoid tabs.  Instead, use exactly 2 spaces to indent code.  Lines
-should break at 80 columns.
+should break at 80 columns.  Whitespace greatly increases readability,
+and should be used between adjacent statements.  The exceptions to the
+newline between statements rule include blocks of "use" statements
+and blocks of variable assignments.  
+
+An example subroutine:
+
+  sub build_something_else
+  {
+     my ( $self, $param ) = @_;
+
+     defined $param or
+       throw new Exception( );
+
+     my $something = calculate_something( $param );
+
+     my $something_else = calculate_something_else( $something );
+
+     return $something_else;
+  }
 
 
 
+                          -----------------
+                            Return Values
+                          -----------------
+
+To increase code clarity, a temporary variable should be used to store
+the return value in a subroutine.  Since "return" is essentially a
+noop in perl (it merely points the interpreter to the correct value to
+pass back), this introduces no additional overhead, but greatly
+improves readability.  I.e., one should write:
+
+
+  sub calculate_two
+  {
+    my ( $self ) = @_;
+
+    my $two = 1 + 1;
+
+    return $two;
+  }
+
+
+instead of:
+
+
+  sub calculate_two
+  {
+    my ( $self ) = @_;
+
+    return 1 + 1;
+  }
 
                               ----------
                                 Naming
@@ -284,9 +333,8 @@ follows:
   # rights and limitations under the License.
   ######################################################################
 
-The "Id:" keyword is optional, though highly recommended if the code
-is being managed with CVS.  Note that there should not be a space
-between the '$' and the 'Id:' keyword if you want it to be expanded.
+The "Id" keyword is optional, though highly recommended if the code is
+being managed with CVS.
 
 
 After the copyright disclaimer, there should be a blank line, and then
@@ -360,13 +408,17 @@ Finally, the class should be documented according to this template:
 
   Description of the method
 
-  =item C<$parameter>
+  =over 4 
+
+  =item $parameter
 
   Description of the $parameter
 
   =item Returns
 
   Description of the return value
+
+  =back
 
   =back
 
