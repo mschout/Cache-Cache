@@ -1,7 +1,12 @@
 Revision history for Cache
 
+1.01 2002-04-14-01-30
+ - released version 1.01
+ - switched to Digest::SHA1
+ - updated copyright dates
+
 1.0 2002-04-06-18-51
- - released vresion 1.0
+ - released version 1.0
  - localized scope of global file and directory handles (FILE and DIR)
  - applied Jonathan Swartz's patch for a much better untainting regex
  - changed _Untaint_String to throw an exception on a taint
