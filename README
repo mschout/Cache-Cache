@@ -1,0 +1,109 @@
+Copyright (C) 2001 DeWitt Clinton  All Rights Reserved
+     
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 1, or (at your option)
+   any later version.
+      
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+NAME
+
+  Cache::Cache
+
+
+DESCRIPTION
+
+  The Perl Cache package provides Cache::Cache, a generic interface
+  for creating persistent data stores.  This interface is implemented
+  by the Cache::MemoryCache, Cache::SharedMemoryCache, Cache::FileCache, 
+  Cache::SizeAwareFileCache, Cache::SizeAwareMemoryCache, and 
+  Cache::SizeAwareSharedMemoryCache classes.  This work replaces 
+  File::Cache and IPC::Cache.
+
+
+REQUIREMENTS
+
+  Digest::MD5
+  File::Spec
+  File::Path
+  IPC::ShareLite
+  Storable
+
+
+INSTALLATION
+
+  perl Makefile.PL
+  make
+  make test
+  make install
+
+
+USAGE
+
+  First, choose the best type of cache implementation for your needs.
+  The simplest cache is the MemoryCache, which is suitable for
+  applications that are serving multiple sequential requests, and
+  which to avoid making redundant expensive queries, such as an
+  Apache/mod_perl application talking to a database.  If you wish to
+  share that data between processes, then perhaps the
+  SharedMemoryCache is appropriate, although its behavior is tightly
+  bound to the underlying IPC mechanism, which varies from system to
+  system, and is unsuitable for large objects or large numbers of
+  objects.  When the SharedMemoryCache is not acceptable, then
+  FileCache offers all of the same functionality with similar
+  performance metrics, and it is not limited in terms of the number of
+  objects or their size.  If you wish to maintain a strict limit on
+  the size of a file system based cache, then the SizeAwareFileCache
+  is the way to go.  Similarly, the SizeAwareMemoryCache and the
+  SizeAwareSharedMemoryCache add size management functionality
+  to the MemoryCache and SharedMemoryCache classes respectively.
+
+ 
+  Using a cache is simple.  Here is some sample code for instantiating
+  and using a MemoryCache:
+
+    use Cache::Cache qw( $EXPIRES_NEVER $EXPIRES_NOW );
+    use Cache::MemoryCache;
+
+    my $options_hash_ref = { 'default_expires_in' => '10 seconds' };
+
+    my $cache = new Cache::MemoryCache( $options_hash_ref );
+
+    my $expires_in = '10 minutes';
+
+    $cache->set( 'Key', 'Value', $expires_in );
+
+    # if the next line is called within 10 minutes, then this 
+    # will return the cache value
+
+    my $value = $cache->get( 'Key' );
+
+
+  Please refer to the perldoc for Cache::Cache and the related
+  implementations for complete documentation.
+
+
+SEE ALSO
+
+  File::Cache and IPC::Cache, and the project homepage at:
+
+    http://sourceforge.net/projects/perl-cache/
+
+
+AUTHOR
+
+  Original author: DeWitt Clinton <dewitt@unto.net>
+
+  Last author:     $Author: dclinton $
+
+  Copyright (C) 2001 DeWitt Clinton
+

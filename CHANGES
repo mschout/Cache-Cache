@@ -1,0 +1,97 @@
+Revision history for Cache
+
+0.07 2000-03-27-08-55
+ - released version 0.07
+ - prepared for initial CPAN release
+ - improved Cache::Cache documentation
+ - removed last "use IPC::Shareable" 
+ - added support in the Makefile.PL to conditionally build the
+   SharedMemoryCache, which requires IPC::ShareLite, and thus runs only
+   on certain architectures.  Also broke out the IPC related routines
+   into the SharedCacheUtils package.
+ - started version 0.07
+
+0.06 2000-03-23-08-36
+ - release version 0.06
+ - added the get_identifiers method to the Cache interface, implemented
+   the method for all classes, added a new test, and updated the test 
+   scripts
+ - added the size property to Object
+ - added the _freeze and _thaw methods to the BaseCache class and
+   modified all children classes to use them
+ - revert to separate freeze and thaws on the memory based caches to
+   ensure that cached data isn't modified at any time
+ - major rewrite of the size aware cache logic
+ - added the CacheMetaData class, which is used to efficiently keep track
+   of a size aware cache state
+ - refactored the instance specific limit_size routines into the
+   generic Limit_Size method in CacheUtils
+ - updated the size aware cache implementations to use the CacheMetaData
+   and Limit_Size methods
+ - improved the SizeAwareCacheTester and updated the test scripts
+ - removed unnecessary clone call from the SharedMemoryCache and the
+   SizeAwareSharedMemoryCache
+ - added exclusive locking on the shared cache for operations that
+   will both read and write to the cache
+ - replaced the cache_hash_ref instance property in MemoryCache with
+   a class property and updated the SharedMemoryCache and 
+   SizeAwareSharedMemoryCache modules accordingly
+ - started version 0.06
+
+0.05 2000-03-20-10-25
+ - released version 0.05
+ - updated Storable dependency to 1.011
+ - replaced the IPC::Shareable backend with IPC::ShareLite
+ - started version 0.05
+
+0.04 2000-03-17-10-43
+ - released version 0.04
+ - replaced Data::Dumper with Storable, which is now a requirement
+ - implemented the SizeAwareMemoryCache and associated tests
+ - implemented the SizeAwareSharedMemoryCache and associated tests
+ - added the SizeAwareCache interface
+ - moved max_size logic from the _store method to the set method
+ - started version 0.04
+
+0.03 2000-03-10-12-40
+ - released version 0.03
+ - made the FileCache more multi-user friendly by allowing a more
+   permissive default directory umask, which can also be optionally 
+   overridden
+ - updated documentation and code style
+ - completely rewrote and improved the limit_size method for a major
+   performance gain
+ - updated the syntax for expiration times to include the [number] [unit] 
+   format, e.g. "10 seconds"
+ - added the get_object method to the Cache interface, which allows
+   access to the underlying cache object (without potentially expiring
+   the object)
+ - added the get_namespace and get_default_expires_in methods to the
+   Cache interface definition
+ - updated the MANIFEST
+ - checked in preliminary cache benchmarking code
+ - fixed bug fixed bug #406030 -- default_expires_in never invoked
+ - refactored common code into BaseCache
+ - use Static_Params method
+ - fixed default_expires_in bug
+ - added coding guidelines to STYLE
+ - started version 0.03
+
+0.02 2000-02-15-21-12
+ - released version 0.02
+ - added perldoc to SizeAwareFileCache
+ - created SizeAwareFileCache
+ - added the SizeAwareCacheTester module
+ - refactored common test code into the AbstractCacheTester module
+ - added the Recursively_List_Files_With_Paths routine to CacheUtils
+ - marked the FileCache and MemoryCache as ISA Cache::Cache
+ - updated the MANIFEST
+ - started version 0.02
+
+0.01 2001-02-13-16-16
+ - released version 0.01
+ - implemented Get_Temp_Dir to make the FileCache root more OS
+   independent
+ - started version 0.01
+
+
