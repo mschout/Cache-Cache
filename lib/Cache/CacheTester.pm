@@ -586,6 +586,53 @@ sub _test_seventeen
 }
 
 
+# test the auto_purge on get functionality
+
+sub _test_eighteen
+{
+  my ( $self, $cache ) = @_;
+
+  $cache->Clear( );
+
+  my $expires_in = $EXPIRES_DELAY;
+
+  $cache->set_auto_purge_interval( $expires_in );
+
+  $cache->set_auto_purge_on_get( 1 );
+
+  my $key = 'Test Key';
+
+  my $key_two = 'Test Key Two';
+
+  my $value = 'Test Value';
+
+  $cache->set( $key, $value, $expires_in );
+
+  $cache->set( $key_two, $value, $expires_in );
+
+  my $fetched_value = $cache->get( $key );
+
+  ( $fetched_value eq $value ) ?
+    $self->ok( ) : $self->not_ok( '$fetched_value eq $value' );
+
+  my $fetched_value_two = $cache->get( $key_two );
+
+  ( $fetched_value_two eq $value ) ?
+    $self->ok( ) : $self->not_ok( '$fetched_value eq $value' );
+
+  sleep( $EXPIRES_DELAY + 1 );
+
+  $cache->get( 'Text Key' ); # trigger purge for key_two
+
+  my $fetched_expired_object = $cache->get_object( $key_two );
+
+  ( not defined $fetched_expired_object ) ?
+    $self->ok( ) : $self->not_ok( 'not defined $fetched_expired_object' );
+
+  $cache->Clear( );
+}
+
+
 
 sub Arrays_Are_Equal
 {

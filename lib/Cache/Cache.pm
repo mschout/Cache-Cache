@@ -1,5 +1,5 @@
 #####################################################################
-# $Id: Cache.pm,v 1.42 2005/03/17 19:31:26 dclinton Exp $
+# $Id: Cache.pm,v 1.43 2005/07/13 22:29:33 dclinton Exp $
 # Copyright (C) 2001-2003 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -20,7 +20,7 @@ use Exporter;
 
 @EXPORT_OK = qw( $VERSION $EXPIRES_NOW $EXPIRES_NEVER );
 
-$VERSION = "1.04";
+$VERSION = "1.05";
 $EXPIRES_NOW = 'now';
 $EXPIRES_NEVER = 'never';
 
@@ -61,7 +61,7 @@ sub get_auto_purge_interval;
 
 sub set_auto_purge_interval;
 
-sub get_auto_purge_on_set;
+sub get_auto_purge_on_get;
 
 sub set_auto_purge_on_set;
 
@@ -255,7 +255,9 @@ checked on every set.
 =item I<auto_purge_on_get>
 
 If this option is true, then the auto purge interval routine will be
-checked on every get.
+checked on every get.  This is probably not the desired behavior, as
+the purge could be a very expensive operation.
+
 
 =back
 

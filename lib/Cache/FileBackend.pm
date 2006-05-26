@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: FileBackend.pm,v 1.27 2005/03/17 19:31:27 dclinton Exp $
+# $Id: FileBackend.pm,v 1.28 2005/07/13 22:29:33 dclinton Exp $
 # Copyright (C) 2001-2003 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -558,6 +558,11 @@ sub _Write_File
   umask( $p_optional_umask ) if $p_optional_umask;
 
   my ( $volume, $directory, $filename ) = File::Spec->splitpath( $p_path );
+ 
+  if ( defined $directory and defined $volume )
+  {
+    $directory = File::Spec->catpath( $volume, $directory, "" );
+  }
 
   my ( $temp_fh, $temp_filename ) = tempfile( DIR => $directory );
 
