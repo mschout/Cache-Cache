@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: NullCache.pm,v 1.8 2005/11/04 15:34:42 dclinton Exp $
+# $Id: NullCache.pm,v 1.7 2002/07/18 06:15:18 dclinton Exp $
 # Copyright (C) 2001 Jay Sachs, 2002 DeWitt Clinton All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS

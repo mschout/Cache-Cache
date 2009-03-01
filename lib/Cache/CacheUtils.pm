@@ -27,9 +27,6 @@ use Storable qw( nfreeze thaw dclone );
                  Static_Params
                  Thaw_Data );
 
-use vars ( @EXPORT_OK );
-
-
 # throw an Exception if the Assertion fails
 
 sub Assert_Defined

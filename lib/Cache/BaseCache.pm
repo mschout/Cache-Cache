@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: BaseCache.pm,v 1.26 2006/05/18 04:20:17 dclinton Exp $
+# $Id: BaseCache.pm,v 1.25 2003/04/15 14:46:14 dclinton Exp $
 # Copyright (C) 2001-2003 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -315,7 +315,7 @@ sub get_namespaces
 {
   my ( $self ) = @_;
 
-  return $self->_get_backend( )->get_namespaces( );
+  return grep {!/$AUTO_PURGE_NAMESPACE/} $self->_get_backend( )->get_namespaces( );
 }
 
 

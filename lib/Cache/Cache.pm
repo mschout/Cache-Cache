@@ -20,7 +20,7 @@ use Exporter;
 
 @EXPORT_OK = qw( $VERSION $EXPIRES_NOW $EXPIRES_NEVER );
 
-$VERSION = "1.05";
+$VERSION = "1.06";
 $EXPIRES_NOW = 'now';
 $EXPIRES_NEVER = 'never';
 
@@ -61,7 +61,7 @@ sub get_auto_purge_interval;
 
 sub set_auto_purge_interval;
 
-sub get_auto_purge_on_get;
+sub get_auto_purge_on_set;
 
 sub set_auto_purge_on_set;
 
@@ -96,6 +96,19 @@ filesystem or shared memory.
 The Cache::Cache interface is implemented by classes that support the
 get, set, remove, size, purge, and clear instance methods and their
 corresponding static methods for persisting data across method calls.
+
+=head1 CACHE::CACHE VERSUS CHI
+
+Cache::Cache is in wide use and very stable, but has not changed in years
+and is no longer actively developed.
+
+L<CHI|CHI> is the successor to Cache::Cache. It adheres to the basic
+Cache::Cache API but adds new features and drivers (e.g. FastMmap and
+Memcached), improves performance, and addresses limitations in the
+Cache::Cache implementation. The authors recommend the use of CHI going forward.
+
+Questions about Cache::Cache and CHI may be directed to the perl-cache
+mailing list at http://groups.google.com/group/perl-cache-discuss.
 
 =head1 USAGE
 
@@ -255,9 +268,7 @@ checked on every set.
 =item I<auto_purge_on_get>
 
 If this option is true, then the auto purge interval routine will be
-checked on every get.  This is probably not the desired behavior, as
-the purge could be a very expensive operation.
-
+checked on every get.
 
 =back
 
@@ -302,6 +313,8 @@ checked on every get.
 =back
 
 =head1 SEE ALSO
+
+CHI - the successor to Cache::Cache
 
 Cache::Object, Cache::MemoryCache, Cache::FileCache,
 Cache::SharedMemoryCache, and Cache::SizeAwareFileCache

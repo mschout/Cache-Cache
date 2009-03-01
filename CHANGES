@@ -1,8 +1,10 @@
 Revision history for Cache
 
-1.05 2006-05-26-08-22
- - release version 1.05
- - added test for auto_purge_on_get
+1.06 in progress
+ - updated the project homepage and added notes about the CHI project
+ - fixed extra "use vars" in CacheUtils
+
+1.05 2006-05-26
  - fixed infinite loop with auto_purge_on_get
  - fixed directory paths on Windows partitions
  - NullCache uses BaseCache

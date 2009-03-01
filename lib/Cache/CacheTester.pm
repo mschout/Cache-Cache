@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: CacheTester.pm,v 1.21 2003/04/15 14:46:17 dclinton Exp $
+# $Id: CacheTester.pm,v 1.20 2002/04/07 17:04:46 dclinton Exp $
 # Copyright (C) 2001-2003 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
@@ -570,10 +570,12 @@ sub _test_seventeen
 {
   my ( $self, $cache ) = @_;
 
-  $cache->set( 'foo', 'bar' );
+  $cache->set( 'a', '1' );
+  $cache->set_namespace( 'namespace' );
+  $cache->set( 'b', '2' );
 
   if ( Arrays_Are_Equal( [ sort( $cache->get_namespaces( ) ) ],
-                         [ sort( 'Default', '__AUTO_PURGE__' ) ] ) )
+                         [ sort( 'Default', 'namespace' ) ] ) )
   {
     $self->ok( );
   }
@@ -581,53 +583,6 @@ sub _test_seventeen
   {
     $self->not_ok( "get_namespaces returned the wrong namespaces" );
   }
-
-  $cache->Clear( );
-}
-
-
-# test the auto_purge on get functionality
-
-sub _test_eighteen
-{
-  my ( $self, $cache ) = @_;
-
-  $cache->Clear( );
-
-  my $expires_in = $EXPIRES_DELAY;
-
-  $cache->set_auto_purge_interval( $expires_in );
-
-  $cache->set_auto_purge_on_get( 1 );
-
-  my $key = 'Test Key';
-
-  my $key_two = 'Test Key Two';
-
-  my $value = 'Test Value';
-
-  $cache->set( $key, $value, $expires_in );
-
-  $cache->set( $key_two, $value, $expires_in );
-
-  my $fetched_value = $cache->get( $key );
-
-  ( $fetched_value eq $value ) ?
-    $self->ok( ) : $self->not_ok( '$fetched_value eq $value' );
-
-  my $fetched_value_two = $cache->get( $key_two );
-
-  ( $fetched_value_two eq $value ) ?
-    $self->ok( ) : $self->not_ok( '$fetched_value eq $value' );
-
-  sleep( $EXPIRES_DELAY + 1 );
-
-  $cache->get( 'Text Key' ); # trigger purge for key_two
-
-  my $fetched_expired_object = $cache->get_object( $key_two );
-
-  ( not defined $fetched_expired_object ) ?
-    $self->ok( ) : $self->not_ok( 'not defined $fetched_expired_object' );
 
   $cache->Clear( );
 }

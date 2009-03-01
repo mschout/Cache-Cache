@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: SizeAwareSharedMemoryCache.pm,v 1.23 2003/04/15 14:46:24 dclinton Exp $
+# $Id: SizeAwareSharedMemoryCache.pm,v 1.22 2002/04/07 17:04:46 dclinton Exp $
 # Copyright (C) 2001-2003 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS

@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: BaseCacheTester.pm,v 1.8 2003/04/15 14:46:15 dclinton Exp $
+# $Id: BaseCacheTester.pm,v 1.7 2002/04/07 17:04:46 dclinton Exp $
 # Copyright (C) 2001-2003 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS

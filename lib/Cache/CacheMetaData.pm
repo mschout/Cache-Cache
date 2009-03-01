@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: CacheMetaData.pm,v 1.13 2003/04/15 14:46:16 dclinton Exp $
+# $Id: CacheMetaData.pm,v 1.12 2002/04/07 17:04:46 dclinton Exp $
 # Copyright (C) 2001-2003 DeWitt Clinton  All Rights Reserved
 #
 # Software distributed under the License is distributed on an "AS
