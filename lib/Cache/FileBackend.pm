@@ -33,13 +33,14 @@ my $UNTAINTED_PATH_REGEX = '^(.*)$';
 
 sub new
 {
-  my ( $proto, $p_root, $p_depth, $p_directory_umask ) = @_;
+  my ( $proto, $p_root, $p_depth, $p_directory_umask, $p_file_umask ) = @_;
   my $class = ref( $proto ) || $proto;
   my $self  = {};
   $self = bless( $self, $class );
   $self->set_root( $p_root );
   $self->set_depth( $p_depth );
   $self->set_directory_umask( $p_directory_umask );
+  $self->set_file_umask( $p_file_umask );
   return $self;
 }
 
@@ -181,6 +182,12 @@ sub get_directory_umask
   return $self->{_Directory_Umask};
 }
 
+sub get_file_umask
+{
+    my ( $self ) = @_;
+
+    return $self->{_File_Umask};
+}
 
 sub set_directory_umask
 {
@@ -189,6 +196,12 @@ sub set_directory_umask
   $self->{_Directory_Umask} = $directory_umask;
 }
 
+sub set_file_umask
+{
+    my ( $self, $file_umask ) = @_;
+
+    $self->{_File_Umask} = $file_umask;
+}
 
 # Take an human readable key, and create a unique key from it
 
@@ -553,9 +566,9 @@ sub _Write_File
   Assert_Defined( $p_path );
   Assert_Defined( $p_data_ref );
 
-  my $old_umask = umask if $p_optional_umask;
+  my $old_umask = umask if defined $p_optional_umask;
 
-  umask( $p_optional_umask ) if $p_optional_umask;
+  umask( $p_optional_umask ) if defined $p_optional_umask;
 
   my ( $volume, $directory, $filename ) = File::Spec->splitpath( $p_path );
  
@@ -588,7 +601,7 @@ sub _Write_File
 
   chmod( $p_optional_mode, _Untaint_Path($p_path) );
 
-  umask( $old_umask ) if $old_umask;
+  umask( $old_umask ) if defined $old_umask;
 }
 
 
@@ -679,7 +692,7 @@ sub _write_data
 
   my $frozen_file = Freeze_Data( $p_data );
 
-  _Write_File( $p_path, \$frozen_file );
+  _Write_File( $p_path, \$frozen_file, undef, $self->get_file_umask( ) );
 }
 
 
@@ -749,6 +762,10 @@ The branching factor of the subdirectories created to store the files
 =item B<(get|set)_directory_umask>
 
 The umask to be used when creating directories
+
+=item B<(get|set)_file_umask>
+
+The umask used when creating files.  Default is to use the current umask.
 
 =back
 

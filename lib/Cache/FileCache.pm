@@ -171,7 +171,8 @@ sub _initialize_file_backend
 
   $self->_set_backend( new Cache::FileBackend( $self->_get_initial_root( ),
                                                $self->_get_initial_depth( ),
-                                               $self->_get_initial_umask( ) ));
+                                               $self->_get_initial_umask( ),
+                                               $self->_get_initial_file_umask( ) ));
 }
 
 
@@ -205,6 +206,12 @@ sub _get_initial_umask
   return $self->_read_option( 'directory_umask', $DEFAULT_DIRECTORY_UMASK );
 }
 
+sub _get_initial_file_umask
+{
+    my ( $self ) = @_;
+
+    return $self->_read_option( 'file_umask', undef );
+}
 
 sub get_cache_depth
 {
@@ -328,6 +335,12 @@ umask, thus reducing the risk of cache poisoning.  If you desire it to
 only be user writable, set the 'directory_umask' option to '077' or
 similar.  Defaults to '000' unless explicitly set.
 
+=item I<file_umask>
+
+The fies created in the cache filesystem are created with the current user's
+umask by default. If you want a different umask, set file_umask to the desired
+value.  For example '000' would result in files created with mode 666.
+
 =back
 
 =head1 PROPERTIES
@@ -347,6 +360,10 @@ See the definition above for the option I<cache_depth>
 =item B<(get|set)_directory_umask>
 
 See the definition above for the option I<directory_umask>
+
+=item B<(get|set)_file_umask>
+
+Set the definition above for the option I<file_umask>
 
 =back
 
